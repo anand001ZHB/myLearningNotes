@@ -1,562 +1,1462 @@
-# Complete YAML Guide: Everything You Need to Know
+# YAML for DevOps and CI/CD Pipelines
+
+Complete guide covering YAML concepts essential for GitHub Actions, Kubernetes, Docker, Azure Pipelines, and CI/CD deployments.
 
 ## Table of Contents
-1. [Introduction to YAML](#introduction-to-yaml)
-2. [Basic Syntax](#basic-syntax)
-3. [Data Types](#data-types)
-4. [Collections](#collections)
-5. [Advanced Features](#advanced-features)
-6. [Common Use Cases](#common-use-cases)
-7. [Best Practices](#best-practices)
-8. [Examples](#examples)
-9. [Tools and Resources](#tools-and-resources)
+1. [YAML Fundamentals](#yaml-fundamentals)
+2. [Core YAML Concepts](#core-yaml-concepts)
+3. [GitHub Actions YAML](#github-actions-yaml)
+4. [Kubernetes YAML](#kubernetes-yaml)
+5. [Docker Compose YAML](#docker-compose-yaml)
+6. [Azure Pipelines YAML](#azure-pipelines-yaml)
+7. [Deployment Shell Commands](#deployment-shell-commands)
+8. [Real-World Examples](#real-world-examples)
+9. [Best Practices](#best-practices)
 
 ---
 
-## Introduction to YAML
+## YAML Fundamentals
 
 ### What is YAML?
 
-**YAML** stands for **"YAML Ain't Markup Language"** (recursive acronym). It's a human-readable data serialization standard that can be used in conjunction with all programming languages and is often used for writing configuration files.
+**YAML** stands for **"YAML Ain't Markup Language"**. It's a human-readable data serialization format that's perfect for:
+- Configuration files
+- CI/CD pipeline definitions
+- Infrastructure as Code (IaC)
+- Container orchestration
+- Deployment automation
 
-### Key Characteristics
+### Why YAML for DevOps?
 
-- **Human-readable**: Easy to read and write
-- **Language-independent**: Works with any programming language
-- **Data-focused**: Designed for data, not documents
-- **Whitespace-sensitive**: Indentation matters (like Python)
-- **Case-sensitive**: `Name` and `name` are different
+✅ **Easy to read and write** - Minimal syntax, whitespace matters (like Python)
+✅ **Language-agnostic** - Works with any technology stack
+✅ **Version control friendly** - Plain text format, easy to diff
+✅ **Widely adopted** - Standard for Docker, Kubernetes, GitHub, Azure, and more
 
-### Common File Extensions
-
-- `.yaml` (preferred)
-- `.yml` (commonly used, especially in CI/CD)
-
----
-
-## Basic Syntax
-
-### Indentation
-
-YAML uses **spaces** (not tabs) for indentation. Standard indentation is **2 spaces** per level.
+### Basic Syntax Rules
 
 ```yaml
-# Correct (2 spaces)
-person:
-  name: John
-  age: 30
+# RULE 1: Key-value pairs use colon and space syntax
+key: value
 
-# Incorrect (tabs or inconsistent spacing)
-person:
-    name: John  # Wrong - 4 spaces
-  age: 30       # Wrong - 2 spaces (inconsistent)
-```
+# RULE 2: Indentation uses spaces (NOT tabs), typically 2 spaces
+parent:
+  child: value
+  another_child: value
 
-### Comments
-
-Comments start with `#` and continue to the end of the line.
-
-```yaml
+# RULE 3: Comments start with # and extend to end of line
 # This is a comment
-name: John  # Inline comment
-# Multi-line comments require # on each line
-```
+value: 42  # This is also a comment
 
-### Key-Value Pairs
+# RULE 4: Lists use hyphen-space prefix
+items:
+  - item1
+  - item2
+  - item3
 
-Basic structure uses `key: value` format.
-
-```yaml
-name: John Doe
-age: 30
-email: john@example.com
-```
-
-### Strings
-
-Strings can be written in multiple ways:
-
-```yaml
-# Simple string (no quotes needed if unambiguous)
-name: John Doe
-
-# Quoted strings (useful for special characters)
-name: "John O'Doe"
-description: "He said \"Hello\""
-
-# Single quotes (preserves everything literally)
-name: 'John O''Doe'  # Single quote escaped as ''
-
-# Multiline strings
-description: |
-  This is a multiline string.
-  It preserves line breaks.
-  All lines are included.
-
-# Folded strings (converts line breaks to spaces)
-description: >
-  This is a folded string.
-  Line breaks become spaces.
-  Good for long paragraphs.
-```
-
-### Boolean Values
-
-```yaml
-# True values
-isActive: true
-enabled: True
-yes: YES
-on: On
-
-# False values
-isActive: false
-disabled: False
-no: NO
-off: Off
-
-# Null/empty
-value: null
-empty: ~
-nothing: Null
-```
-
-### Numbers
-
-```yaml
-# Integers
-age: 30
-count: -5
-zero: 0
-
-# Floats
-price: 29.99
-temperature: -10.5
-pi: 3.14159
-
-# Scientific notation
-large: 1.2e+10
-small: 3.4e-5
-
-# Octal (base 8)
-octal: 0o755
-
-# Hexadecimal (base 16)
-hex: 0xFF
-
-# Infinity and NaN
-infinity: .inf
-negative_infinity: -.inf
-not_a_number: .nan
+# RULE 5: Strings don't need quotes unless they contain special characters
+name: John Doe              # OK - no quotes needed
+message: "Hello: World"     # Quotes needed because of colon
 ```
 
 ---
 
-## Data Types
+## Core YAML Concepts
 
-### Explicit Type Tags
-
-YAML supports explicit type specification:
+### 1. Data Types
 
 ```yaml
-# String
-name: !!str John
+# STRING - Text values
+username: john_doe
+email: "john@example.com"  # Quoted if contains special chars
 
-# Integer
-age: !!int 30
+# NUMBER - Integer or float
+port: 8080                 # Integer
+timeout: 30.5              # Float
+replicas: 3
 
-# Float
-price: !!float 29.99
+# BOOLEAN - True/false values
+enabled: true              # Boolean true
+debug: false               # Boolean false
 
-# Boolean
-isActive: !!bool true
+# NULL - Empty/null values
+value: null                # Null value
+empty: ~                   # Alternative null syntax
 
-# Null
-value: !!null null
-
-# Timestamp
-date: !!timestamp 2024-01-15T10:30:00Z
-
-# Binary data
-image: !!binary |
-  R0lGODlhDAAMAIQAAP//9/X
-  17unp5WZmZgAAAOfn515eXv
-  Pz7Y6OjuDg4J+fn5OTk6enp
-  56enmleECcgggoBADs=
+# DATE - ISO 8601 format (rarely used in CI/CD)
+created: 2024-01-15T10:30:00Z
 ```
 
-### Date and Time
+### 2. Lists and Arrays
 
 ```yaml
-# ISO 8601 format
-date1: 2024-01-15
-datetime1: 2024-01-15T10:30:00
-datetime2: 2024-01-15T10:30:00Z
-datetime3: 2024-01-15T10:30:00+05:30
+# List format - each item on new line with hyphen
+languages:
+  - python
+  - javascript
+  - go
 
-# Timestamp
-timestamp: !!timestamp 2024-01-15 10:30:00
-```
-
----
-
-## Collections
-
-### Lists/Arrays
-
-```yaml
-# Simple list (hyphen syntax)
-fruits:
-  - apple
-  - banana
-  - orange
-
-# Inline list
-fruits: [apple, banana, orange]
+# Inline list format - compact notation
+tools: [docker, kubernetes, jenkins]
 
 # List of objects
-people:
-  - name: John
-    age: 30
-  - name: Jane
-    age: 25
-
-# Mixed types
-items: [apple, 42, true, null]
+services:
+  - name: api
+    port: 8080
+  - name: db
+    port: 5432
 ```
 
-### Dictionaries/Maps
+### 3. Dictionaries and Nested Objects
 
 ```yaml
 # Simple dictionary
 person:
   name: John
   age: 30
-  city: New York
-
-# Inline dictionary
-person: {name: John, age: 30, city: New York}
+  email: john@example.com
 
 # Nested dictionaries
-company:
-  name: Acme Corp
-  address:
-    street: 123 Main St
-    city: New York
-    zip: 10001
-  employees:
-    - name: John
-      role: Developer
-    - name: Jane
-      role: Designer
+deployment:
+  production:
+    environment: prod
+    replicas: 3
+    resources:
+      memory: 2Gi
+      cpu: "1"
+  staging:
+    environment: staging
+    replicas: 1
+    resources:
+      memory: 512Mi
+      cpu: "0.5"
 ```
 
-### Complex Nested Structures
+### 4. Anchors and Aliases (Reusable Blocks)
+
+Purpose: Avoid repeating the same configuration in multiple places.
 
 ```yaml
-# Combining lists and dictionaries
-server:
-  name: production
-  ports:
-    - 80
-    - 443
-  environment:
-    database:
-      host: db.example.com
-      port: 5432
-      name: mydb
-    cache:
-      enabled: true
-      ttl: 3600
-  services:
-    - name: api
-      version: 1.0.0
-      replicas: 3
-    - name: worker
-      version: 2.1.0
-      replicas: 2
-```
+# Define a reusable block with &anchor_name
+defaults: &default_settings
+  timeout: 30
+  retries: 3
+  debug: false
 
----
-
-## Advanced Features
-
-### Anchors and Aliases
-
-Reuse data without duplication:
-
-```yaml
-# Define anchor with &
-defaults: &defaults
-  adapter: postgres
-  host: localhost
-  port: 5432
-
-# Reference anchor with *
-development:
-  <<: *defaults  # Merge anchor
+# Use the anchor in multiple places with *anchor_name
+development_env:
+  <<: *default_settings          # Merge all keys from defaults
   database: dev_db
 
-production:
-  <<: *defaults
+production_env:
+  <<: *default_settings          # Reuse same defaults
   database: prod_db
-  host: prod.example.com
-
-# Simple alias
-name: &name John Doe
-person1: *name
-person2: *name
+  timeout: 60                    # Override timeout value
 ```
 
-### Multi-Document Files
-
-Separate multiple documents with `---`:
+### 5. Multi-line Strings
 
 ```yaml
----
-# Document 1
-name: John
-age: 30
----
-# Document 2
-name: Jane
-age: 25
----
-# Document 3
-name: Bob
-age: 35
-```
+# Literal block (preserves newlines) - use |
+description: |
+  This is a multi-line
+  string that preserves
+  all line breaks exactly.
 
-### Tags and Custom Types
+# Folded block (converts newlines to spaces) - use >
+summary: >
+  This is a multi-line string
+  that will fold all
+  newlines into spaces.
 
-```yaml
-# Custom tag
-!myTag value
-
-# Example with custom types
-!!python/object:__main__.Person
-name: John
-age: 30
-
-# Example with custom constructor
-!CustomType
-  field1: value1
-  field2: value2
-```
-
-### Flow vs Block Style
-
-```yaml
-# Block style (default, more readable)
-person:
-  name: John
-  age: 30
-  hobbies:
-    - reading
-    - coding
-
-# Flow style (compact, JSON-like)
-person: {name: John, age: 30, hobbies: [reading, coding]}
-
-# Mixed style
-person:
-  name: John
-  tags: [developer, python, yaml]
-```
-
-### Escaping Special Characters
-
-```yaml
-# Colon in value
-description: "Time: 10:30 AM"
-
-# Hash in value
-comment: "Version #1.0"
-
-# Pipe and greater-than
-text: "Use | for multiline, > for folded"
-
-# Special characters
-special: "Line 1\nLine 2\tTabbed"
+# Result: "This is a multi-line string that will fold all newlines into spaces."
 ```
 
 ---
 
-## Common Use Cases
+## GitHub Actions YAML
 
-### Configuration Files
+**Location:** `.github/workflows/*.yml` files in your repository
 
-```yaml
-# application.yaml (Spring Boot example)
-spring:
-  application:
-    name: myapp
-  datasource:
-    url: jdbc:postgresql://localhost/mydb
-    username: admin
-    password: secret
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-
-server:
-  port: 8080
-  servlet:
-    context-path: /api
-
-logging:
-  level:
-    root: INFO
-    com.example: DEBUG
-```
-
-### Docker Compose
+### Basic Workflow Structure
 
 ```yaml
-version: '3.8'
+# Workflow name - appears in GitHub Actions tab
+name: CI/CD Pipeline
 
-services:
-  web:
-    image: nginx:latest
-    ports:
-      - "80:80"
-    volumes:
-      - ./html:/usr/share/nginx/html
-    environment:
-      - NGINX_HOST=example.com
-    depends_on:
-      - db
-
-  db:
-    image: postgres:13
-    environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secret
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
-volumes:
-  db_data:
-```
-
-### CI/CD Pipelines
-
-#### GitHub Actions
-
-GitHub Actions uses YAML files (`.github/workflows/*.yml`) to define CI/CD pipelines. Key concepts:
-
-- **Workflows**: Defined in `.github/workflows/` directory
-- **Events**: Triggers like `push`, `pull_request`, `schedule`, `workflow_dispatch`
-- **Jobs**: Units of work that run on runners (can run in parallel or sequentially)
-- **Steps**: Individual tasks within a job
-- **Actions**: Reusable units of work (from marketplace or custom)
-- **Runners**: Virtual machines that execute jobs (GitHub-hosted or self-hosted)
-- **Secrets**: Encrypted variables for sensitive data
-- **Environments**: Deployment targets with protection rules
-
-**Key GitHub Actions YAML Syntax:**
-
-```yaml
-# Workflow triggers
+# Triggers - when this workflow runs
 on:
   push:
-    branches: [main]
+    # Runs when code is pushed to these branches
+    branches: [ main, develop ]
+    # Runs only when these paths change
     paths:
       - 'src/**'
       - 'package.json'
+  
   pull_request:
-    types: [opened, synchronize, reopened]
+    # Runs when PR is opened, updated, or reopened
+    branches: [ main ]
+  
+  # Manual trigger from GitHub UI
+  workflow_dispatch:
+  
+  # Run on schedule (cron format)
   schedule:
-    - cron: '0 0 * * *'  # Daily at midnight
-  workflow_dispatch:  # Manual trigger
-    inputs:
-      environment:
-        type: choice
-        options: [staging, production]
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
 
-# Matrix strategy for multiple configurations
-strategy:
-  matrix:
-    os: [ubuntu-latest, windows-latest, macos-latest]
-    node-version: [16.x, 18.x, 20.x]
+# Environment variables available to all jobs
+env:
+  NODE_VERSION: '18.x'
+  REGISTRY: ghcr.io
 
-# Job dependencies
+# Jobs - units of work that run on runners
 jobs:
   build:
+    # Which machine to run on
     runs-on: ubuntu-latest
-  test:
-    needs: build  # Wait for build to complete
-  deploy:
-    needs: [build, test]  # Wait for both
-
-# Conditional execution
-if: github.ref == 'refs/heads/main'
-if: success() || failure()
-if: contains(github.event.head_commit.message, 'deploy')
-
-# Environment protection
-environment:
-  name: production
-  url: https://example.com
+    
+    # Steps - individual tasks
+    steps:
+      # ACTION: Check out your code
+      - uses: actions/checkout@v4
+      
+      # ACTION: Setup Node.js environment
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'  # Cache node_modules for speed
+      
+      # RUN: Execute shell command
+      - name: Install dependencies
+        run: npm install
+      
+      # RUN: Build the project
+      - name: Build application
+        run: npm run build
+      
+      # RUN: Run tests
+      - name: Run tests
+        run: npm test
 ```
 
-See detailed examples in the [Real-World Examples](#real-world-examples) section below.
+### Key GitHub Actions Concepts
 
-#### Azure Pipelines
+#### 1. Workflow Triggers (on:)
+```yaml
+on:
+  # Trigger on push to specific branches
+  push:
+    branches: [main, develop]
+  
+  # Trigger on pull requests
+  pull_request:
+    branches: [main]
+  
+  # Trigger on manual dispatch
+  workflow_dispatch:
+  
+  # Trigger on schedule
+  schedule:
+    - cron: '0 2 * * *'
+  
+  # Trigger on release
+  release:
+    types: [published]
+```
 
-Azure DevOps uses YAML files (`azure-pipelines.yml`) for CI/CD. Key concepts:
+**Purpose:** Defines WHEN the workflow should execute
 
-- **Stages**: High-level divisions (Build, Test, Deploy)
-- **Jobs**: Units of work within stages
-- **Tasks**: Individual operations (build, test, deploy)
-- **Variables**: Configuration values (can be scoped)
-- **Environments**: Deployment targets with approvals
-- **Service Connections**: External service authentication
+#### 2. Jobs (jobs:)
+```yaml
+jobs:
+  # Job 1 - runs in parallel by default
+  test:
+    runs-on: ubuntu-latest
+    steps: [...]
+  
+  # Job 2 - also runs in parallel
+  build:
+    runs-on: ubuntu-latest
+    steps: [...]
+  
+  # Job 3 - depends on job 2, waits for it to complete
+  deploy:
+    needs: build  # Wait for 'build' job to finish
+    runs-on: ubuntu-latest
+    steps: [...]
+```
 
-**Key Azure Pipelines YAML Syntax:**
+**Purpose:** Define parallel or dependent work units
+
+#### 3. Steps (steps:)
+```yaml
+steps:
+  # Step 1: Use a pre-built action
+  - uses: actions/checkout@v4
+  
+  # Step 2: Run a shell command
+  - name: Install dependencies
+    run: npm install
+  
+  # Step 3: Run with environment variables
+  - name: Deploy
+    run: ./deploy.sh
+    env:
+      DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+```
+
+**Purpose:** Individual tasks within a job
+
+#### 4. Conditional Execution (if:)
+```yaml
+steps:
+  # Only run on main branch
+  - name: Deploy to production
+    if: github.ref == 'refs/heads/main'
+    run: npm run deploy:prod
+  
+  # Only run on pull requests
+  - name: Comment on PR
+    if: github.event_name == 'pull_request'
+    run: echo "Running on PR"
+  
+  # Only run if previous steps succeeded
+  - name: Notify success
+    if: success()
+    run: echo "All checks passed"
+  
+  # Only run if previous steps failed
+  - name: Notify failure
+    if: failure()
+    run: echo "Something failed"
+```
+
+**Purpose:** Control when steps run
+
+#### 5. Secrets and Variables
+```yaml
+steps:
+  # Access GitHub secret (stored securely)
+  - name: Deploy with credentials
+    run: ./deploy.sh
+    env:
+      # Repository secret
+      API_KEY: ${{ secrets.API_KEY }}
+      # GitHub variable (non-sensitive)
+      ENVIRONMENT: ${{ vars.DEPLOYMENT_ENV }}
+      # Context variable
+      BRANCH: ${{ github.ref_name }}
+```
+
+**Purpose:** Securely pass sensitive data and configuration
+
+#### 6. Matrix Strategy (for parallel testing across versions)
+```yaml
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # Test across multiple Node versions
+        node-version: ['16.x', '18.x', '20.x']
+        # Test across multiple OS
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      
+      - run: npm test
+```
+
+**Purpose:** Test against multiple configurations simultaneously
+
+#### 7. Artifacts and Caching
+```yaml
+steps:
+  # Cache dependencies (for speed)
+  - uses: actions/setup-node@v4
+    with:
+      cache: 'npm'  # Auto-cache node_modules
+  
+  # Save build output as artifact
+  - name: Build
+    run: npm run build
+  
+  - uses: actions/upload-artifact@v3
+    with:
+      name: build-output
+      path: dist/
+  
+  # Download artifact in another job
+  - uses: actions/download-artifact@v3
+    with:
+      name: build-output
+      path: dist/
+```
+
+**Purpose:** Share files between jobs and speed up workflows
+
+---
+
+## Kubernetes YAML
+
+**Location:** `.yaml` or `.yml` files applied with `kubectl apply -f`
+
+### Basic Kubernetes Manifest Structure
 
 ```yaml
-# Multi-stage pipeline
-stages:
-  - stage: Build
-    jobs:
-      - job: BuildJob
-        steps: [...]
+# API version - which Kubernetes API to use
+apiVersion: apps/v1
 
-# Deployment jobs with strategies
-deployment: DeployApp
-  strategy:
-    runOnce:
-      deploy: [...]
-    canary:
-      increments: [10, 20, 30, 100]
-    rolling:
-      maxParallel: 2
+# Kind - type of Kubernetes resource
+kind: Deployment
 
-# Variable groups and secrets
-variables:
-  - group: 'Production-Secrets'
-  - name: buildConfiguration
-    value: 'Release'
+# Metadata - information about this resource
+metadata:
+  name: my-app              # Name of the deployment
+  namespace: production     # Namespace (logical cluster)
+  labels:
+    app: my-app            # Labels for organizing resources
+    environment: prod
+    version: v1.0.0
 
-# Conditions and dependencies
-condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
-dependsOn: Build
+# Spec - desired state of the resource
+spec:
+  # Number of pod replicas
+  replicas: 3
+  
+  # How to select pods managed by this deployment
+  selector:
+    matchLabels:
+      app: my-app          # Must match labels in template
+  
+  # Template for pod creation
+  template:
+    metadata:
+      labels:
+        app: my-app        # Pods get these labels
+    
+    spec:
+      # Container definitions
+      containers:
+      - name: app-container           # Container name
+        image: myapp:1.0.0            # Docker image
+        imagePullPolicy: IfNotPresent  # Only pull if not present
+        
+        ports:
+        - containerPort: 8080         # Port to expose
+          name: http
+        
+        # Environment variables in the container
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://db:5432/mydb"
+        
+        # Read from ConfigMap
+        - name: APP_CONFIG
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: settings
+        
+        # Read from Secret (encrypted)
+        - name: DATABASE_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
+        
+        # Resource limits (prevent resource exhaustion)
+        resources:
+          requests:                    # Minimum required
+            memory: "256Mi"
+            cpu: "250m"
+          limits:                      # Maximum allowed
+            memory: "512Mi"
+            cpu: "500m"
+        
+        # Health check - is the app running?
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        # Ready check - can it handle traffic?
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 3
 ```
 
-See detailed examples in the [Real-World Examples](#real-world-examples) section below.
+### Core Kubernetes Resources
 
-### Kubernetes Manifests
-
+#### 1. Deployment (for stateless apps)
 ```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: web-app
+spec:
+  replicas: 3                    # Run 3 instances
+  selector:
+    matchLabels:
+      app: web-app
+  template:
+    metadata:
+      labels:
+        app: web-app
+    spec:
+      containers:
+      - name: app
+        image: myapp:1.0.0
+        ports:
+        - containerPort: 8080
+```
+
+**Purpose:** Deploy and manage stateless applications with rolling updates
+
+#### 2. Service (expose apps to network)
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: web-app-service
+spec:
+  # ClusterIP (internal) | NodePort (external) | LoadBalancer (cloud)
+  type: LoadBalancer
+  
+  # Which pods to expose
+  selector:
+    app: web-app
+  
+  # Port mapping
+  ports:
+  - port: 80                    # External port
+    targetPort: 8080            # Container port
+    protocol: TCP
+```
+
+**Purpose:** Network abstraction - expose pods to internal or external traffic
+
+#### 3. ConfigMap (non-secret configuration)
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: production
+data:
+  # Key-value pairs for configuration
+  DATABASE_HOST: db.example.com
+  DATABASE_PORT: "5432"
+  LOG_LEVEL: INFO
+  
+  # Multi-line config files
+  nginx.conf: |
+    server {
+      listen 80;
+      location / {
+        proxy_pass http://app:8080;
+      }
+    }
+```
+
+**Purpose:** Store non-sensitive configuration data
+
+#### 4. Secret (sensitive data - encrypted)
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-secret
+  namespace: production
+type: Opaque
+stringData:
+  # Will be base64 encoded in etcd
+  password: "super-secret-password"
+  api-key: "sk_live_123abc"
+  connection-string: "postgresql://admin:pass@db:5432/db"
+```
+
+**Purpose:** Store sensitive data like passwords, API keys, tokens
+
+#### 5. HorizontalPodAutoscaler (auto-scaling)
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web-app-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web-app
+  
+  minReplicas: 2              # Minimum pods
+  maxReplicas: 10             # Maximum pods
+  
+  metrics:
+  # Scale based on CPU usage
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70  # Scale when CPU > 70%
+  
+  # Scale based on memory usage
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80  # Scale when memory > 80%
+```
+
+**Purpose:** Automatically add/remove pods based on load
+
+#### 6. Ingress (HTTP/HTTPS routing)
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+spec:
+  ingressClassName: nginx
+  
+  # SSL/TLS certificate
+  tls:
+  - hosts:
+    - api.example.com
+    secretName: tls-secret
+  
+  # URL routing rules
+  rules:
+  - host: api.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web-app-service
+            port:
+              number: 80
+  
+  - host: admin.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: admin-app-service
+            port:
+              number: 8080
+```
+
+**Purpose:** HTTP/HTTPS routing and load balancing
+
+---
+
+## Docker Compose YAML
+
+**Location:** `docker-compose.yml` file
+
+### Basic Docker Compose Structure
+
+```yaml
+# Compose file version (3.8 is common)
+version: '3.8'
+
+# Services - containers to run
+services:
+  # Service 1: Web application
+  web:
+    # Build from Dockerfile
+    build:
+      context: ./web           # Build context directory
+      dockerfile: Dockerfile   # Dockerfile name
+    
+    # OR use pre-built image
+    image: nginx:latest
+    
+    # Container name
+    container_name: web-app
+    
+    # Restart policy
+    restart: unless-stopped    # Always restart unless stopped manually
+    
+    # Port mapping
+    ports:
+      - "80:8080"             # Host:Container
+      - "443:8443"
+    
+    # Environment variables
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://db:5432/mydb
+    
+    # OR from .env file
+    env_file:
+      - .env.production
+    
+    # Volume mounting (persistent storage)
+    volumes:
+      - ./app:/app            # Bind mount
+      - app-data:/data        # Named volume
+    
+    # Service dependencies
+    depends_on:
+      db:
+        condition: service_healthy
+    
+    # Health check
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    
+    # Network
+    networks:
+      - frontend
+      - backend
+  
+  # Service 2: Database
+  db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    
+    # Environment variables for postgres
+    environment:
+      POSTGRES_DB: mydb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+    
+    # Persistent volume
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    
+    # Health check (for depends_on)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# Named volumes
+volumes:
+  postgres-data:
+  app-data:
+
+# Networks
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+```
+
+### Key Docker Compose Fields
+
+#### 1. Image vs Build
+```yaml
+# Use pre-built image
+image: nginx:latest
+
+# OR build from Dockerfile
+build:
+  context: .              # Directory containing Dockerfile
+  dockerfile: Dockerfile  # Dockerfile name
+  args:                   # Build arguments
+    NODE_ENV: production
+```
+
+**Purpose:** Specify how to run containers
+
+#### 2. Ports
+```yaml
+ports:
+  - "80:8080"        # Host port 80 → Container port 8080
+  - "443:8443"
+  - "127.0.0.1:3000:3000"  # Only bind to localhost
+```
+
+**Purpose:** Expose container ports to host
+
+#### 3. Volumes
+```yaml
+volumes:
+  # Bind mount (host directory)
+  - ./app:/app
+  
+  # Named volume (managed by Docker)
+  - db-data:/var/lib/postgresql/data
+  
+  # Read-only
+  - ./config:/config:ro
+```
+
+**Purpose:** Persistent storage and file sharing
+
+#### 4. Environment Variables
+```yaml
+environment:
+  - DATABASE_URL=postgres://db:5432/db
+  - DEBUG=true
+
+# OR from file
+env_file:
+  - .env
+  - .env.production
+```
+
+**Purpose:** Configure application behavior
+
+#### 5. Depends On
+```yaml
+depends_on:
+  # Simple dependency - just wait for container start
+  - db
+  
+  # OR with health check condition
+  db:
+    condition: service_healthy
+```
+
+**Purpose:** Control startup order
+
+#### 6. Healthcheck
+```yaml
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  interval: 30s          # Check every 30 seconds
+  timeout: 10s           # Timeout after 10 seconds
+  retries: 3             # Fail after 3 retries
+  start_period: 40s      # Grace period on startup
+```
+
+**Purpose:** Monitor container health
+
+---
+
+## Azure Pipelines YAML
+
+**Location:** `azure-pipelines.yml` file in repository root
+
+### Basic Azure Pipelines Structure
+
+```yaml
+# Trigger rules
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+    exclude:
+      - releases/*
+  paths:
+    include:
+      - src/
+      - tests/
+    exclude:
+      - docs/
+
+# Pull request trigger
+pr:
+  branches:
+    include:
+      - main
+
+# Variables (configuration)
+variables:
+  buildConfiguration: 'Release'
+  nodeVersion: '18.x'
+  imageName: 'myapp'
+
+# Stages - logical groups of jobs
+stages:
+  # Stage 1: Build and Test
+  - stage: Build
+    displayName: 'Build Stage'
+    jobs:
+      # Job 1: Build application
+      - job: BuildJob
+        displayName: 'Build Application'
+        pool:
+          vmImage: 'ubuntu-latest'  # Which agent/VM to use
+        
+        steps:
+          # Setup Node.js
+          - task: NodeTool@0
+            displayName: 'Use Node.js $(nodeVersion)'
+            inputs:
+              versionSpec: '$(nodeVersion)'
+          
+          # Install dependencies
+          - task: Npm@1
+            displayName: 'npm install'
+            inputs:
+              command: 'install'
+          
+          # Run build
+          - task: Npm@1
+            displayName: 'npm run build'
+            inputs:
+              command: 'custom'
+              customCommand: 'run build'
+          
+          # Publish build artifacts
+          - task: PublishBuildArtifacts@1
+            displayName: 'Publish Artifacts'
+            inputs:
+              pathToPublish: '$(Build.ArtifactStagingDirectory)'
+              artifactName: 'drop'
+  
+  # Stage 2: Deploy
+  - stage: Deploy
+    displayName: 'Deploy Stage'
+    dependsOn: Build           # Wait for Build stage
+    condition: succeeded()     # Only if Build succeeded
+    
+    jobs:
+      - deployment: DeployApp
+        displayName: 'Deploy to Production'
+        environment:
+          name: 'Production'
+          resourceType: 'Kubernetes'
+        
+        strategy:
+          # Rolling deployment strategy
+          rolling:
+            maxParallel: 2         # Update 2 pods at a time
+          # OR canary deployment
+          canary:
+            increments: [10, 20, 50, 100]  # % rollout increments
+        
+        steps:
+          # Download artifact from Build stage
+          - download: current
+            artifact: drop
+          
+          # Deploy using kubectl
+          - task: Kubernetes@1
+            displayName: 'Deploy to Kubernetes'
+            inputs:
+              connectionType: 'Kubernetes Service Connection'
+              kubernetesServiceEndpoint: 'k8s-prod'
+              namespace: 'production'
+              command: 'apply'
+              arguments: '-f deployment.yaml'
+```
+
+### Key Azure Pipelines Concepts
+
+#### 1. Stages (sequential groups of jobs)
+```yaml
+stages:
+  - stage: Build
+    displayName: 'Build'
+    jobs: [...]
+  
+  - stage: Test
+    displayName: 'Test'
+    dependsOn: Build      # Wait for Build to complete
+    condition: succeeded()
+    jobs: [...]
+  
+  - stage: Deploy
+    displayName: 'Deploy'
+    dependsOn: Test       # Wait for Test to complete
+    jobs: [...]
+```
+
+**Purpose:** Group jobs logically and control dependencies
+
+#### 2. Variables (configuration)
+```yaml
+variables:
+  # Scalar variables
+  buildConfiguration: 'Release'
+  nodeVersion: '18.x'
+  
+  # Variable group (stored in library)
+  - group: 'Production-Secrets'
+  
+  # Reference in scripts
+  - name: imageName
+    value: 'myapp'
+
+steps:
+  - script: echo $(nodeVersion)  # Access variable
+```
+
+**Purpose:** Store configuration values
+
+#### 3. Jobs (units of work)
+```yaml
+jobs:
+  # Sequential jobs (default)
+  - job: Job1
+    steps: [...]
+  
+  - job: Job2
+    dependsOn: Job1
+    steps: [...]
+  
+  # OR parallel jobs
+  - job: UnitTests
+    steps: [...]
+  
+  - job: IntegrationTests
+    steps: [...]
+```
+
+**Purpose:** Define work units
+
+#### 4. Tasks (built-in Azure Pipelines actions)
+```yaml
+steps:
+  # NodeTool task
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '18.x'
+  
+  # Npm task
+  - task: Npm@1
+    inputs:
+      command: 'install'
+  
+  # Docker task
+  - task: Docker@2
+    inputs:
+      command: 'build'
+      Dockerfile: 'Dockerfile'
+  
+  # Publish artifact task
+  - task: PublishBuildArtifacts@1
+    inputs:
+      pathToPublish: 'dist/'
+```
+
+**Purpose:** Common CI/CD operations
+
+#### 5. Deployment Jobs (for deployments)
+```yaml
+- deployment: DeploymentJob
+  displayName: 'Deploy App'
+  
+  environment:
+    name: 'Production'
+    resourceType: 'Kubernetes'
+  
+  strategy:
+    # Running strategy
+    runOnce:
+      deploy:
+        steps: [...]
+    
+    # OR rolling update
+    rolling:
+      maxParallel: 2
+      deploy:
+        steps: [...]
+    
+    # OR canary deployment
+    canary:
+      increments: [10, 50, 100]
+      deploy:
+        steps: [...]
+```
+
+**Purpose:** Specialized job for deployments with strategies
+
+---
+
+## Deployment Shell Commands
+
+Common shell commands used in deployment pipelines and DevOps workflows.
+
+### Git Commands
+
+```bash
+# Clone repository
+git clone https://github.com/user/repo.git
+git clone --depth 1 https://github.com/user/repo.git  # Shallow clone (faster)
+
+# Check status
+git status
+git log --oneline -5  # Last 5 commits
+
+# Branching
+git branch -a                    # List all branches
+git checkout -b feature/new      # Create new branch
+git switch main                  # Switch to main branch
+
+# Staging and committing
+git add .                        # Stage all changes
+git commit -m "feat: new feature"
+git push origin feature/new      # Push to remote
+
+# Tags (for releases)
+git tag -a v1.0.0 -m "Release v1.0.0"
+git push origin --tags
+```
+
+**Purpose:** Version control operations
+
+### Docker Commands
+
+```bash
+# Build image
+docker build -t myapp:1.0.0 .
+docker build -t myapp:latest -f Dockerfile.prod .
+
+# Run container
+docker run -d -p 8080:8080 --name app myapp:1.0.0
+docker run -e DATABASE_URL=postgres://db:5432/db myapp:1.0.0
+
+# Container management
+docker ps                        # List running containers
+docker ps -a                     # List all containers
+docker logs container-name       # View logs
+docker logs -f container-name    # Follow logs
+docker stop container-name
+docker rm container-name
+
+# Image management
+docker images                    # List images
+docker rmi myapp:1.0.0          # Remove image
+docker tag myapp:1.0.0 myapp:latest
+docker push myregistry/myapp:1.0.0
+
+# Registry login
+docker login ghcr.io             # GitHub Container Registry
+docker login docker.io           # Docker Hub
+docker login myregistry.azurecr.io  # Azure Container Registry
+
+# Clean up (remove unused resources)
+docker system prune -a           # Remove all unused images/containers
+docker image prune                # Remove dangling images
+```
+
+**Purpose:** Container building, running, and management
+
+### Docker Compose Commands
+
+```bash
+# Start services (in background)
+docker-compose up -d
+
+# Start services (foreground, see logs)
+docker-compose up
+
+# View logs
+docker-compose logs -f           # Follow all service logs
+docker-compose logs db           # View db service logs
+
+# Stop services
+docker-compose stop
+
+# Stop and remove containers
+docker-compose down
+
+# Remove everything (including volumes)
+docker-compose down -v
+
+# Rebuild images
+docker-compose build
+docker-compose build --no-cache  # Rebuild without cache
+
+# Execute command in running container
+docker-compose exec web npm run build
+
+# Scale service (run multiple instances)
+docker-compose up -d --scale worker=3  # 3 worker instances
+```
+
+**Purpose:** Multi-container application management
+
+### Kubernetes Commands
+
+```bash
+# Cluster information
+kubectl cluster-info
+kubectl get nodes                # List cluster nodes
+kubectl config current-context   # Show current context
+kubectl config use-context prod  # Switch context
+
+# Deploy application
+kubectl apply -f deployment.yaml
+kubectl apply -f .               # Apply all YAML files in directory
+kubectl apply -f deployment.yaml -n production  # Specific namespace
+
+# View deployments
+kubectl get deployments
+kubectl get pods
+kubectl get services
+kubectl describe deployment my-app
+kubectl describe pod pod-name
+
+# Check pod logs
+kubectl logs pod-name                    # Single pod logs
+kubectl logs deployment/my-app          # All pod logs for deployment
+kubectl logs pod-name --previous        # Logs from previous crashed pod
+kubectl logs pod-name -f                # Follow logs
+
+# Update deployment
+kubectl set image deployment/my-app app=myapp:2.0.0  # Update image
+kubectl rollout status deployment/my-app             # Check rollout progress
+kubectl rollout undo deployment/my-app               # Rollback to previous version
+
+# Execute commands in pod
+kubectl exec -it pod-name -- bash      # Interactive shell
+kubectl exec pod-name -- npm run test  # Run command
+
+# Port forwarding (for debugging)
+kubectl port-forward pod-name 8080:8080  # Forward port 8080
+
+# Delete resources
+kubectl delete pod pod-name
+kubectl delete deployment my-app
+kubectl delete all -l app=my-app     # Delete all with specific label
+
+# ConfigMap and Secrets
+kubectl create configmap app-config --from-literal=KEY=value
+kubectl create secret generic db-secret --from-literal=password=secret
+
+# Scaling
+kubectl scale deployment my-app --replicas=5
+
+# Health and status
+kubectl get events              # Cluster events
+kubectl describe node node-name # Node details
+kubectl top nodes               # Node resource usage
+kubectl top pods                # Pod resource usage
+```
+
+**Purpose:** Container orchestration and deployment
+
+### Build and Package Management
+
+```bash
+# Node.js / npm
+npm install                      # Install dependencies
+npm ci                          # Clean install (for CI/CD)
+npm run build                   # Build application
+npm run test                    # Run tests
+npm run lint                    # Run linter
+npm publish                     # Publish package to npm
+
+# Python / pip
+pip install -r requirements.txt
+pip install --upgrade package-name
+pip freeze > requirements.txt   # Export dependencies
+
+# Java / Maven
+mvn clean                       # Clean build directory
+mvn compile                     # Compile code
+mvn test                        # Run tests
+mvn package                     # Create JAR/WAR
+
+# Java / Gradle
+gradle build
+gradle test
+gradle clean
+gradle publish
+```
+
+**Purpose:** Language-specific build commands
+
+### Database and Migration Commands
+
+```bash
+# Database backups
+pg_dump -U admin dbname > backup.sql           # PostgreSQL dump
+mysqldump -u root -p dbname > backup.sql       # MySQL dump
+mongodump --uri mongodb+srv://server/db        # MongoDB dump
+
+# Database restore
+psql -U admin dbname < backup.sql              # PostgreSQL restore
+mysql -u root -p dbname < backup.sql           # MySQL restore
+
+# Database migrations
+./node_modules/.bin/sequelize-cli db:migrate   # Run migrations
+./node_modules/.bin/sequelize-cli db:seed      # Run seeders
+
+# Check database connection
+psql -U admin -h localhost -d dbname -c "SELECT version();"
+mysql -u root -p -h localhost -e "SELECT VERSION();"
+```
+
+**Purpose:** Database management and migration
+
+### Health Checks and Monitoring
+
+```bash
+# HTTP health checks
+curl -f http://localhost:8080/health           # Check endpoint
+curl -I http://localhost:8080                  # Head request (headers only)
+curl -s http://localhost:8080/health | jq     # Pretty print JSON
+
+# Service checks
+netstat -tlnp | grep 8080                      # Check port listening
+lsof -i :8080                                  # List process on port
+ps aux | grep node                             # Find process
+
+# System monitoring
+top                              # Real-time process monitoring
+df -h                            # Disk usage
+free -h                          # Memory usage
+du -sh /path                     # Directory size
+```
+
+**Purpose:** Verify service health and system resources
+
+### Deployment and Release Commands
+
+```bash
+# SSH deployment
+ssh user@server.com "cd /app && git pull && npm install && npm run build"
+scp -r dist/ user@server.com:/app/
+
+# Helm (Kubernetes package manager)
+helm repo add myrepo https://charts.example.com
+helm install my-release myrepo/mychart
+helm upgrade my-release myrepo/mychart
+helm rollback my-release                # Rollback release
+
+# Infrastructure as Code (Terraform)
+terraform init                          # Initialize
+terraform plan                          # Preview changes
+terraform apply -auto-approve           # Apply changes
+terraform destroy                       # Destroy infrastructure
+
+# Cloud CLI (AWS)
+aws s3 cp dist/ s3://my-bucket/ --recursive     # Upload to S3
+aws ecs update-service --cluster my-cluster --service my-service --force-new-deployment
+
+# Cloud CLI (Azure)
+az webapp deployment source config-zip --resource-group rg --name app --src-path dist.zip
+az acr build --registry myregistry --image myapp:latest .
+```
+
+**Purpose:** Deploy applications to production
+
+---
+
+## Real-World Examples
+
+### Example 1: GitHub Actions - Node.js CI/CD
+
+```yaml
+# .github/workflows/deploy.yml
+name: Build and Deploy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '18.x'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+
+  build:
+    name: Build Docker Image
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/metadata-action@v5
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/my-app \
+            app=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+```
+
+### Example 2: Kubernetes - Complete Deployment
+
+```yaml
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: production
+data:
+  NODE_ENV: production
+  LOG_LEVEL: info
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: my-app
-  labels:
-    app: my-app
+  namespace: production
 spec:
   replicas: 3
   selector:
@@ -568,303 +1468,13 @@ spec:
         app: my-app
     spec:
       containers:
-      - name: my-app
-        image: my-app:1.0.0
+      - name: app
+        image: myregistry/my-app:latest
         ports:
         - containerPort: 8080
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: db-secret
-              key: url
-        resources:
-          requests:
-            memory: "128Mi"
-            cpu: "100m"
-          limits:
-            memory: "256Mi"
-            cpu: "200m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: my-app-service
-spec:
-  selector:
-    app: my-app
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8080
-  type: LoadBalancer
-```
-
-### Ansible Playbooks
-
-```yaml
----
-- name: Configure web servers
-  hosts: webservers
-  become: yes
-  vars:
-    http_port: 80
-    max_clients: 200
-  tasks:
-    - name: Install nginx
-      apt:
-        name: nginx
-        state: present
-        update_cache: yes
-
-    - name: Configure nginx
-      template:
-        src: nginx.conf.j2
-        dest: /etc/nginx/nginx.conf
-      notify: restart nginx
-
-    - name: Start nginx
-      service:
-        name: nginx
-        state: started
-        enabled: yes
-
-  handlers:
-    - name: restart nginx
-      service:
-        name: nginx
-        state: restarted
-```
-
----
-
-## Best Practices
-
-### 1. Consistent Indentation
-
-```yaml
-# Good: Consistent 2-space indentation
-server:
-  name: production
-  config:
-    port: 8080
-    timeout: 30
-
-# Bad: Mixed indentation
-server:
-    name: production
-  config:
-      port: 8080
-    timeout: 30
-```
-
-### 2. Use Meaningful Keys
-
-```yaml
-# Good: Descriptive keys
-database_connection_timeout: 30
-max_retry_attempts: 3
-
-# Bad: Abbreviated or unclear
-db_to: 30
-mra: 3
-```
-
-### 3. Organize Related Data
-
-```yaml
-# Good: Logical grouping
-application:
-  name: myapp
-  version: 1.0.0
-database:
-  host: localhost
-  port: 5432
-logging:
-  level: INFO
-  file: app.log
-
-# Bad: Flat structure
-application_name: myapp
-application_version: 1.0.0
-database_host: localhost
-database_port: 5432
-logging_level: INFO
-logging_file: app.log
-```
-
-### 4. Use Anchors for Repeated Data
-
-```yaml
-# Good: Reuse with anchors
-defaults: &defaults
-  timeout: 30
-  retries: 3
-
-service1:
-  <<: *defaults
-  name: api
-
-service2:
-  <<: *defaults
-  name: worker
-
-# Bad: Duplication
-service1:
-  timeout: 30
-  retries: 3
-  name: api
-
-service2:
-  timeout: 30
-  retries: 3
-  name: worker
-```
-
-### 5. Quote Strings When Necessary
-
-```yaml
-# Good: Quote special values
-version: "1.0.0"
-description: "Version #1 with special chars: yes"
-
-# Good: No quotes for simple strings
-name: John
-age: 30
-
-# Bad: Unquoted special characters
-version: 1.0.0  # Could be interpreted as number
-description: Version #1  # Comment starts here!
-```
-
-### 6. Validate Your YAML
-
-Always validate YAML files before using them:
-- Use online validators
-- Use IDE plugins
-- Use command-line tools like `yamllint`
-
-### 7. Document Complex Structures
-
-```yaml
-# Good: Comments explain complex logic
-# This configuration uses a round-robin load balancing strategy
-# with health checks every 30 seconds
-load_balancer:
-  strategy: round-robin
-  health_check:
-    interval: 30  # seconds
-    timeout: 5    # seconds
-    retries: 3
-```
-
----
-
-## Real-World Examples
-
-### Example 1: Kubernetes Deployment
-
-Complete Kubernetes manifest with Deployment, Service, ConfigMap, and Secret:
-
-```yaml
-# k8s-deployment.yaml
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: production
-  labels:
-    environment: production
-    team: backend
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app-config
-  namespace: production
-data:
-  app.properties: |
-    database.host=postgres-service
-    database.port=5432
-    cache.enabled=true
-    cache.ttl=3600
-    logging.level=INFO
-  nginx.conf: |
-    server {
-      listen 80;
-      server_name example.com;
-      location / {
-        proxy_pass http://localhost:8080;
-      }
-    }
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: app-secrets
-  namespace: production
-type: Opaque
-stringData:
-  database-password: "super-secret-password-123"
-  api-key: "sk_live_abc123xyz789"
-  jwt-secret: "my-jwt-secret-key-2024"
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: web-app
-  namespace: production
-  labels:
-    app: web-app
-    version: v1.0.0
-    environment: production
-spec:
-  replicas: 3
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-  selector:
-    matchLabels:
-      app: web-app
-  template:
-    metadata:
-      labels:
-        app: web-app
-        version: v1.0.0
-    spec:
-      containers:
-      - name: web-app
-        image: myregistry/web-app:1.0.0
-        imagePullPolicy: Always
-        ports:
-        - name: http
-          containerPort: 8080
-          protocol: TCP
-        - name: metrics
-          containerPort: 9090
-          protocol: TCP
-        env:
-        - name: DATABASE_HOST
-          valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: database.host
-        - name: DATABASE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: database-password
-        - name: ENVIRONMENT
-          value: "production"
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
+        envFrom:
+        - configMapRef:
+            name: app-config
         resources:
           requests:
             memory: "256Mi"
@@ -877,1496 +1487,229 @@ spec:
             path: /health
             port: 8080
           initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        volumeMounts:
-        - name: config-volume
-          mountPath: /etc/config
-          readOnly: true
-      volumes:
-      - name: config-volume
-        configMap:
-          name: app-config
-      restartPolicy: Always
-      imagePullSecrets:
-      - name: registry-credentials
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: web-app-service
+  name: my-app-service
   namespace: production
-  labels:
-    app: web-app
 spec:
   type: LoadBalancer
-  ports:
-  - name: http
-    port: 80
-    targetPort: 8080
-    protocol: TCP
-  - name: metrics
-    port: 9090
-    targetPort: 9090
-    protocol: TCP
   selector:
-    app: web-app
-  sessionAffinity: ClientIP
-  sessionAffinityConfig:
-    clientIP:
-      timeoutSeconds: 10800
----
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: web-app-hpa
-  namespace: production
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: web-app
-  minReplicas: 3
-  maxReplicas: 10
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
-  behavior:
-    scaleDown:
-      stabilizationWindowSeconds: 300
-      policies:
-      - type: Percent
-        value: 50
-        periodSeconds: 60
-    scaleUp:
-      stabilizationWindowSeconds: 0
-      policies:
-      - type: Percent
-        value: 100
-        periodSeconds: 30
-      - type: Pods
-        value: 2
-        periodSeconds: 30
-      selectPolicy: Max
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: web-app-ingress
-  namespace: production
-  annotations:
-    kubernetes.io/ingress.class: nginx
-    cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/rate-limit: "100"
-spec:
-  tls:
-  - hosts:
-    - api.example.com
-    - www.example.com
-    secretName: web-app-tls
-  rules:
-  - host: api.example.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: web-app-service
-            port:
-              number: 80
-  - host: www.example.com
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: web-app-service
-            port:
-              number: 80
+    app: my-app
+  ports:
+  - port: 80
+    targetPort: 8080
 ```
 
-### Example 2: Docker Compose - Multi-Service Application
-
-Complete Docker Compose setup with web app, database, cache, and monitoring:
+### Example 3: Docker Compose - Multi-Service Stack
 
 ```yaml
-# docker-compose.yml
 version: '3.8'
 
 services:
-  # Web Application
   web:
     build:
       context: ./web
-      dockerfile: Dockerfile
-      args:
-        NODE_ENV: production
-    image: myapp/web:latest
-    container_name: web-app
-    restart: unless-stopped
+    image: myapp:latest
     ports:
       - "3000:3000"
-      - "3001:3001"  # Admin port
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://admin:${DB_PASSWORD}@db:5432/mydb
-      - REDIS_URL=redis://redis:6379
-      - SESSION_SECRET=${SESSION_SECRET}
-      - API_KEY=${API_KEY}
-    env_file:
-      - .env.production
-    volumes:
-      - ./web/uploads:/app/uploads
-      - ./web/logs:/app/logs
-      - web-data:/app/data
+      DATABASE_URL: postgresql://admin:password@db:5432/mydb
     depends_on:
       db:
         condition: service_healthy
-      redis:
-        condition: service_started
     networks:
-      - frontend
       - backend
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-        reservations:
-          cpus: '0.5'
-          memory: 512M
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.web.rule=Host(`app.example.com`)"
-      - "traefik.http.routers.web.entrypoints=websecure"
-      - "traefik.http.routers.web.tls.certresolver=letsencrypt"
 
-  # PostgreSQL Database
   db:
     image: postgres:15-alpine
-    container_name: postgres-db
-    restart: unless-stopped
     environment:
-      - POSTGRES_DB=mydb
-      - POSTGRES_USER=admin
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --locale=en_US.UTF-8
-      - PGDATA=/var/lib/postgresql/data/pgdata
+      POSTGRES_DB: mydb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./db/init:/docker-entrypoint-initdb.d
-      - ./db/backups:/backups
-    ports:
-      - "5432:5432"
-    networks:
-      - backend
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d mydb"]
+      test: ["CMD-SHELL", "pg_isready -U admin"]
       interval: 10s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: '2.0'
-          memory: 2G
-        reservations:
-          cpus: '1.0'
-          memory: 1G
-    command:
-      - postgres
-      - -c
-      - max_connections=200
-      - -c
-      - shared_buffers=512MB
-      - -c
-      - effective_cache_size=1536MB
-
-  # Redis Cache
-  redis:
-    image: redis:7-alpine
-    container_name: redis-cache
-    restart: unless-stopped
-    command:
-      - redis-server
-      - --appendonly
-      - "yes"
-      - --requirepass
-      - "${REDIS_PASSWORD}"
-      - --maxmemory
-      - "512mb"
-      - --maxmemory-policy
-      - "allkeys-lru"
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
     networks:
       - backend
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-
-  # Nginx Reverse Proxy
-  nginx:
-    image: nginx:alpine
-    container_name: nginx-proxy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - nginx-logs:/var/log/nginx
-    depends_on:
-      - web
-    networks:
-      - frontend
-    labels:
-      - "com.example.service=nginx"
-
-  # Monitoring - Prometheus
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    restart: unless-stopped
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - prometheus-data:/prometheus
-    ports:
-      - "9090:9090"
-    networks:
-      - monitoring
-    depends_on:
-      - web
-
-  # Monitoring - Grafana
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    restart: unless-stopped
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-      - GF_USERS_ALLOW_SIGN_UP=false
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
-      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
-    ports:
-      - "3001:3000"
-    networks:
-      - monitoring
-    depends_on:
-      - prometheus
-
-  # Background Worker
-  worker:
-    build:
-      context: ./worker
-      dockerfile: Dockerfile
-    image: myapp/worker:latest
-    container_name: worker-app
-    restart: unless-stopped
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgresql://admin:${DB_PASSWORD}@db:5432/mydb
-      - REDIS_URL=redis://redis:6379
-      - QUEUE_NAME=jobs
-    env_file:
-      - .env.production
-    volumes:
-      - ./worker/logs:/app/logs
-    depends_on:
-      - db
-      - redis
-    networks:
-      - backend
-    deploy:
-      replicas: 2
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-
-networks:
-  frontend:
-    driver: bridge
-    name: app-frontend
-  backend:
-    driver: bridge
-    name: app-backend
-  monitoring:
-    driver: bridge
-    name: app-monitoring
 
 volumes:
   postgres-data:
-    driver: local
-    name: postgres-data
-  redis-data:
-    driver: local
-    name: redis-data
-  web-data:
-    driver: local
-    name: web-data
-  prometheus-data:
-    driver: local
-    name: prometheus-data
-  grafana-data:
-    driver: local
-    name: grafana-data
-  nginx-logs:
-    driver: local
-    name: nginx-logs
-```
 
-### Example 3: GitHub Actions - Complete CI/CD Pipeline
-
-Comprehensive GitHub Actions workflow with testing, building, security scanning, and deployment:
-
-```yaml
-# .github/workflows/ci-cd.yml
-name: CI/CD Pipeline
-
-on:
-  push:
-    branches:
-      - main
-      - develop
-      - 'release/**'
-    tags:
-      - 'v*.*.*'
-  pull_request:
-    branches:
-      - main
-      - develop
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        type: choice
-        options:
-          - staging
-          - production
-      version:
-        description: 'Version to deploy'
-        required: false
-        type: string
-  schedule:
-    # Run tests every day at 2 AM UTC
-    - cron: '0 2 * * *'
-
-env:
-  NODE_VERSION: '18.x'
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
-jobs:
-  # Lint and Format Check
-  lint:
-    name: Code Quality
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: Check code formatting
-        run: npm run format:check
-
-      - name: Run Prettier
-        run: npx prettier --check "**/*.{js,ts,json,md}"
-
-  # Unit Tests
-  test:
-    name: Unit Tests
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: ['16.x', '18.x', '20.x']
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run unit tests
-        run: npm run test:unit
-        env:
-          CI: true
-
-      - name: Upload coverage reports
-        uses: codecov/codecov-action@v3
-        with:
-          files: ./coverage/lcov.info
-          flags: unittests
-          name: codecov-umbrella
-
-  # Integration Tests
-  integration-test:
-    name: Integration Tests
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: testdb
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run integration tests
-        run: npm run test:integration
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/testdb
-          REDIS_URL: redis://localhost:6379
-
-  # Security Scanning
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Run npm audit
-        run: npm audit --audit-level=moderate
-        continue-on-error: true
-
-      - name: Run Snyk security scan
-        uses: snyk/actions/node@master
-        continue-on-error: true
-        env:
-          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --severity-threshold=high
-
-      - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          scan-type: 'fs'
-          scan-ref: '.'
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-
-      - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v2
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-  # Build Docker Image
-  build:
-    name: Build Docker Image
-    runs-on: ubuntu-latest
-    needs: [lint, test]
-    outputs:
-      image-tag: ${{ steps.meta.outputs.tags }}
-      image-digest: ${{ steps.build.outputs.digest }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-
-      - name: Build and push Docker image
-        id: build
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
-          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
-
-  # Deploy to Staging
-  deploy-staging:
-    name: Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [build, integration-test]
-    if: github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
-    environment:
-      name: staging
-      url: https://staging.example.com
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Deploy to ECS
-        run: |
-          aws ecs update-service \
-            --cluster staging-cluster \
-            --service web-app \
-            --force-new-deployment \
-            --region us-east-1
-
-      - name: Run smoke tests
-        run: |
-          npm run test:smoke -- --env=staging
-
-      - name: Notify Slack
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          text: 'Deployed to staging'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
-        if: always()
-
-  # Deploy to Production
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [build, security]
-    if: |
-      github.ref == 'refs/heads/main' ||
-      startsWith(github.ref, 'refs/tags/v') ||
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
-    environment:
-      name: production
-      url: https://example.com
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
-
-      - name: Deploy to ECS (Blue-Green)
-        run: |
-          aws ecs update-service \
-            --cluster production-cluster \
-            --service web-app \
-            --force-new-deployment \
-            --region us-east-1
-
-      - name: Wait for deployment
-        run: |
-          aws ecs wait services-stable \
-            --cluster production-cluster \
-            --services web-app \
-            --region us-east-1
-
-      - name: Run production smoke tests
-        run: |
-          npm run test:smoke -- --env=production
-
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            Production deployment completed successfully
-            - Image: ${{ needs.build.outputs.image-tag }}
-            - Commit: ${{ github.sha }}
-          draft: false
-          prerelease: false
-
-      - name: Notify Teams
-        uses: aliencube/microsoft-teams-actions@v0.8.0
-        with:
-          webhook_uri: ${{ secrets.TEAMS_WEBHOOK }}
-          title: 'Production Deployment'
-          summary: 'Deployment successful'
-          theme-color: '#00FF00'
-
-  # Cleanup
-  cleanup:
-    name: Cleanup
-    runs-on: ubuntu-latest
-    needs: [deploy-production]
-    if: always()
-    steps:
-      - name: Delete old container images
-        uses: actions/delete-package-versions@v4
-        with:
-          package-name: ${{ env.IMAGE_NAME }}
-          package-type: 'container'
-          min-versions-to-keep: 10
-          delete-only-untagged-versions: true
-```
-
-### Example 4: Azure Pipelines - Multi-Stage CI/CD
-
-Complete Azure DevOps pipeline with build, test, and deployment stages:
-
-```yaml
-# azure-pipelines.yml
-trigger:
-  branches:
-    include:
-      - main
-      - develop
-      - releases/*
-  paths:
-    exclude:
-      - README.md
-      - docs/*
-
-pr:
-  branches:
-    include:
-      - main
-      - develop
-
-variables:
-  - group: 'Production-Secrets'
-  - name: buildConfiguration
-    value: 'Release'
-  - name: dockerRegistryServiceConnection
-    value: 'DockerHub-Connection'
-  - name: imageRepository
-    value: 'myapp/web'
-  - name: containerRegistry
-    value: 'docker.io'
-  - name: dockerfilePath
-    value: '$(Build.SourcesDirectory)/Dockerfile'
-  - name: tag
-    value: '$(Build.BuildId)'
-  - name: vmImageName
-    value: 'ubuntu-latest'
-
-stages:
-  # Stage 1: Build and Test
-  - stage: Build
-    displayName: 'Build and Test Stage'
-    jobs:
-      - job: Build
-        displayName: 'Build Application'
-        pool:
-          vmImage: $(vmImageName)
-        steps:
-          - task: NodeTool@0
-            displayName: 'Use Node.js 18.x'
-            inputs:
-              versionSpec: '18.x'
-
-          - task: Npm@1
-            displayName: 'npm install'
-            inputs:
-              command: 'install'
-              workingDir: '$(Build.SourcesDirectory)'
-
-          - task: Npm@1
-            displayName: 'npm run build'
-            inputs:
-              command: 'custom'
-              workingDir: '$(Build.SourcesDirectory)'
-              customCommand: 'run build'
-
-          - task: PublishBuildArtifacts@1
-            displayName: 'Publish build artifacts'
-            inputs:
-              pathToPublish: '$(Build.ArtifactStagingDirectory)'
-              artifactName: 'drop'
-
-      - job: UnitTests
-        displayName: 'Run Unit Tests'
-        pool:
-          vmImage: $(vmImageName)
-        steps:
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '18.x'
-
-          - task: Npm@1
-            displayName: 'Install dependencies'
-            inputs:
-              command: 'install'
-
-          - task: Npm@1
-            displayName: 'Run unit tests'
-            inputs:
-              command: 'custom'
-              customCommand: 'run test:unit'
-
-          - task: PublishTestResults@2
-            displayName: 'Publish test results'
-            inputs:
-              testResultsFormat: 'JUnit'
-              testResultsFiles: '**/test-results.xml'
-              failTaskOnFailedTests: true
-
-          - task: PublishCodeCoverageResults@1
-            displayName: 'Publish code coverage'
-            inputs:
-              codeCoverageTool: 'Cobertura'
-              summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
-
-      - job: IntegrationTests
-        displayName: 'Run Integration Tests'
-        pool:
-          vmImage: $(vmImageName)
-        services:
-          postgres:
-            image: postgres:15
-            env:
-              POSTGRES_USER: test
-              POSTGRES_PASSWORD: test
-              POSTGRES_DB: testdb
-            ports:
-              - 5432:5432
-        steps:
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '18.x'
-
-          - task: Npm@1
-            displayName: 'Install dependencies'
-            inputs:
-              command: 'install'
-
-          - task: Npm@1
-            displayName: 'Run integration tests'
-            inputs:
-              command: 'custom'
-              customCommand: 'run test:integration'
-            env:
-              DATABASE_URL: 'postgresql://test:test@localhost:5432/testdb'
-
-  # Stage 2: Security and Quality
-  - stage: Security
-    displayName: 'Security and Quality Checks'
-    dependsOn: Build
-    jobs:
-      - job: SecurityScan
-        displayName: 'Security Scanning'
-        pool:
-          vmImage: $(vmImageName)
-        steps:
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '18.x'
-
-          - task: Npm@1
-            displayName: 'npm audit'
-            inputs:
-              command: 'custom'
-              customCommand: 'audit --audit-level=moderate'
-            continueOnError: true
-
-          - task: SnykSecurityScan@1
-            displayName: 'Snyk Security Scan'
-            inputs:
-              serviceConnectionEndpoint: 'Snyk-Connection'
-              testType: 'app'
-              severityThreshold: 'high'
-            continueOnError: true
-
-          - task: SonarCloudPrepare@1
-            displayName: 'Prepare SonarCloud analysis'
-            inputs:
-              SonarCloud: 'SonarCloud-Connection'
-              organization: 'my-org'
-              scannerMode: 'CLI'
-              configMode: 'manual'
-              cliProjectKey: 'myapp'
-              cliProjectName: 'My Application'
-
-          - task: SonarCloudAnalyze@1
-            displayName: 'Run SonarCloud analysis'
-
-          - task: SonarCloudPublish@1
-            displayName: 'Publish SonarCloud results'
-
-      - job: CodeQuality
-        displayName: 'Code Quality Checks'
-        pool:
-          vmImage: $(vmImageName)
-        steps:
-          - task: NodeTool@0
-            inputs:
-              versionSpec: '18.x'
-
-          - task: Npm@1
-            displayName: 'Run ESLint'
-            inputs:
-              command: 'custom'
-              customCommand: 'run lint'
-
-          - task: Npm@1
-            displayName: 'Check code formatting'
-            inputs:
-              command: 'custom'
-              customCommand: 'run format:check'
-
-  # Stage 3: Build Docker Image
-  - stage: BuildDocker
-    displayName: 'Build and Push Docker Image'
-    dependsOn: 
-      - Build
-      - Security
-    condition: succeeded()
-    jobs:
-      - job: DockerBuild
-        displayName: 'Build Docker Image'
-        pool:
-          vmImage: $(vmImageName)
-        steps:
-          - task: Docker@2
-            displayName: 'Build and push Docker image'
-            inputs:
-              containerRegistry: $(dockerRegistryServiceConnection)
-              repository: $(imageRepository)
-              command: 'buildAndPush'
-              Dockerfile: $(dockerfilePath)
-              tags: |
-                $(tag)
-                latest
-                $(Build.SourceBranchName)
-
-          - task: Docker@2
-            displayName: 'Scan Docker image for vulnerabilities'
-            inputs:
-              containerRegistry: $(dockerRegistryServiceConnection)
-              repository: $(imageRepository)
-              command: 'scan'
-              tags: $(tag)
-
-  # Stage 4: Deploy to Staging
-  - stage: DeployStaging
-    displayName: 'Deploy to Staging Environment'
-    dependsOn: BuildDocker
-    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'))
-    jobs:
-      - deployment: DeployStaging
-        displayName: 'Deploy to Staging'
-        environment:
-          name: 'Staging'
-          resourceType: 'Kubernetes'
-          resourceName: 'staging-cluster'
-        strategy:
-          runOnce:
-            deploy:
-              steps:
-                - task: Kubernetes@1
-                  displayName: 'Deploy to Kubernetes'
-                  inputs:
-                    connectionType: 'Kubernetes Service Connection'
-                    kubernetesServiceEndpoint: 'Staging-K8s-Connection'
-                    namespace: 'staging'
-                    command: 'apply'
-                    arguments: '-f k8s/staging-deployment.yaml'
-                    secretType: 'dockerRegistry'
-                    containerRegistryType: 'Azure Container Registry'
-
-                - task: Kubernetes@1
-                  displayName: 'Wait for deployment'
-                  inputs:
-                    connectionType: 'Kubernetes Service Connection'
-                    kubernetesServiceEndpoint: 'Staging-K8s-Connection'
-                    namespace: 'staging'
-                    command: 'rollout'
-                    arguments: 'status deployment/web-app'
-
-                - task: PowerShell@2
-                  displayName: 'Run smoke tests'
-                  inputs:
-                    targetType: 'inline'
-                    script: |
-                      npm run test:smoke -- --env=staging
-
-                - task: Slack@1
-                  displayName: 'Notify Slack'
-                  inputs:
-                    channel: '#deployments'
-                    message: 'Deployed to staging: $(Build.BuildNumber)'
-                  condition: always()
-
-  # Stage 5: Deploy to Production
-  - stage: DeployProduction
-    displayName: 'Deploy to Production Environment'
-    dependsOn: BuildDocker
-    condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/releases/')))
-    jobs:
-      - deployment: DeployProduction
-        displayName: 'Deploy to Production'
-        environment:
-          name: 'Production'
-          resourceType: 'Kubernetes'
-          resourceName: 'production-cluster'
-        strategy:
-          canary:
-            increments: [10, 20, 30, 100]
-            deploy:
-              steps:
-                - task: Kubernetes@1
-                  displayName: 'Deploy canary'
-                  inputs:
-                    connectionType: 'Kubernetes Service Connection'
-                    kubernetesServiceEndpoint: 'Production-K8s-Connection'
-                    namespace: 'production'
-                    command: 'apply'
-                    arguments: '-f k8s/production-canary.yaml'
-                    secretType: 'dockerRegistry'
-
-                - task: PowerShell@2
-                  displayName: 'Run canary tests'
-                  inputs:
-                    targetType: 'inline'
-                    script: |
-                      npm run test:canary -- --env=production
-
-                - task: ManualValidation@0
-                  displayName: 'Manual approval for production'
-                  inputs:
-                    notifyUsers: 'devops-team@example.com'
-                    instructions: 'Please review the canary deployment and approve to continue'
-                    onTimeout: 'reject'
-
-                - task: Kubernetes@1
-                  displayName: 'Promote canary to production'
-                  inputs:
-                    connectionType: 'Kubernetes Service Connection'
-                    kubernetesServiceEndpoint: 'Production-K8s-Connection'
-                    namespace: 'production'
-                    command: 'apply'
-                    arguments: '-f k8s/production-full.yaml'
-
-                - task: Kubernetes@1
-                  displayName: 'Wait for production deployment'
-                  inputs:
-                    connectionType: 'Kubernetes Service Connection'
-                    kubernetesServiceEndpoint: 'Production-K8s-Connection'
-                    namespace: 'production'
-                    command: 'rollout'
-                    arguments: 'status deployment/web-app'
-
-                - task: PowerShell@2
-                  displayName: 'Run production smoke tests'
-                  inputs:
-                    targetType: 'inline'
-                    script: |
-                      npm run test:smoke -- --env=production
-
-                - task: EmailReport@1
-                  displayName: 'Send deployment email'
-                  inputs:
-                    to: 'team@example.com'
-                    subject: 'Production Deployment: $(Build.BuildNumber)'
-                    body: 'Deployment completed successfully'
-
-  # Stage 6: Post-Deployment
-  - stage: PostDeployment
-    displayName: 'Post-Deployment Tasks'
-    dependsOn: 
-      - DeployStaging
-      - DeployProduction
-    condition: succeeded()
-    jobs:
-      - job: Cleanup
-        displayName: 'Cleanup and Notifications'
-        pool:
-          vmImage: $(vmImageName)
-        steps:
-          - task: PowerShell@2
-            displayName: 'Cleanup old artifacts'
-            inputs:
-              targetType: 'inline'
-              script: |
-                # Cleanup logic here
-                Write-Host "Cleaning up old artifacts"
-
-          - task: PublishTestResults@2
-            displayName: 'Publish final test results'
-            condition: always()
-```
-
-## Examples
-
-### Example 1: Application Configuration
-
-```yaml
-# config.yaml
-application:
-  name: "My Awesome App"
-  version: "2.1.0"
-  environment: production
-
-server:
-  host: "0.0.0.0"
-  port: 8080
-  ssl:
-    enabled: true
-    certificate: "/path/to/cert.pem"
-    key: "/path/to/key.pem"
-
-database:
-  primary:
-    host: "db-primary.example.com"
-    port: 5432
-    name: "mydb"
-    user: "admin"
-    pool:
-      min: 5
-      max: 20
-      timeout: 30
-  replica:
-    host: "db-replica.example.com"
-    port: 5432
-    name: "mydb"
-    read_only: true
-
-features:
-  enabled:
-    - authentication
-    - caching
-    - analytics
-  disabled:
-    - beta_features
-    - experimental_api
-
-logging:
-  level: INFO
-  format: json
-  outputs:
-    - type: file
-      path: "/var/log/app.log"
-      rotation: daily
-    - type: console
-      colored: true
-```
-
-### Example 2: API Specification
-
-```yaml
-# api.yaml
-openapi: 3.0.0
-info:
-  title: User Management API
-  version: 1.0.0
-  description: API for managing users
-
-servers:
-  - url: https://api.example.com/v1
-    description: Production server
-  - url: https://staging-api.example.com/v1
-    description: Staging server
-
-paths:
-  /users:
-    get:
-      summary: List users
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            default: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            default: 10
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/User'
-                  total:
-                    type: integer
-
-    post:
-      summary: Create user
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserInput'
-      responses:
-        '201':
-          description: User created
-
-components:
-  schemas:
-    User:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-        created_at:
-          type: string
-          format: date-time
-
-    UserInput:
-      type: object
-      required:
-        - name
-        - email
-      properties:
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-```
-
-### Example 3: Environment-Specific Configs
-
-```yaml
-# Using anchors for common config
-common: &common
-  app_name: "MyApp"
-  api_version: "v1"
-  timeout: 30
-  retries: 3
-
-development:
-  <<: *common
-  environment: development
-  debug: true
-  database:
-    host: localhost
-    port: 5432
-    name: myapp_dev
-  logging:
-    level: DEBUG
-    console: true
-
-staging:
-  <<: *common
-  environment: staging
-  debug: false
-  database:
-    host: staging-db.example.com
-    port: 5432
-    name: myapp_staging
-  logging:
-    level: INFO
-    console: false
-
-production:
-  <<: *common
-  environment: production
-  debug: false
-  database:
-    host: prod-db.example.com
-    port: 5432
-    name: myapp_prod
-  logging:
-    level: WARNING
-    console: false
+networks:
+  backend:
+    driver: bridge
 ```
 
 ---
 
-## Tools and Resources
+## Best Practices
 
-### Online Validators
-
-- **YAML Lint**: https://www.yamllint.com/
-- **Online YAML Parser**: https://yaml-online-parser.appspot.com/
-- **YAML Validator**: https://codebeautify.org/yaml-validator
-
-### Command-Line Tools
-
-```bash
-# yamllint (Python)
-pip install yamllint
-yamllint file.yaml
-
-# yq (YAML processor, like jq for JSON)
-# macOS: brew install yq
-# Linux: wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
-yq eval '.key' file.yaml
-
-# yaml2json / json2yaml
-npm install -g yamljs
-yaml2json file.yaml
-```
-
-### IDE Support
-
-- **VS Code**: YAML extension by Red Hat
-- **IntelliJ IDEA**: Built-in YAML support
-- **Sublime Text**: YAML syntax highlighting
-- **Vim**: vim-yaml plugin
-
-### Libraries by Language
-
-- **Python**: `PyYAML`, `ruamel.yaml`
-- **JavaScript/Node.js**: `js-yaml`, `yaml`
-- **Java**: `SnakeYAML`, `Jackson YAML`
-- **Ruby**: `psych` (built-in)
-- **Go**: `gopkg.in/yaml.v3`
-- **C#**: `YamlDotNet`
-
-### Learning Resources
-
-- **Official YAML Spec**: https://yaml.org/spec/
-- **YAML Tutorial**: https://learnxinyminutes.com/docs/yaml/
-- **YAML Wikipedia**: https://en.wikipedia.org/wiki/YAML
-
----
-
-## Common Pitfalls and How to Avoid Them
-
-### 1. Tabs vs Spaces
+### YAML-Specific Best Practices
 
 ```yaml
-# ❌ Wrong: Using tabs
-person:
-	name: John  # Tab character
-	age: 30
+# ✅ DO: Use 2-space indentation consistently
+deployment:
+  name: my-app
+  spec:
+    replicas: 3
 
-# ✅ Correct: Using spaces
-person:
-  name: John  # 2 spaces
-  age: 30
-```
+# ❌ DON'T: Mix tabs and spaces
+deployment:
+    name: my-app      # 4 spaces - wrong
+  spec:               # 2 spaces - inconsistent
 
-### 2. Inconsistent Indentation
-
-```yaml
-# ❌ Wrong: Mixed indentation
-server:
-  name: production
-    port: 8080  # Wrong: 4 spaces after 2 spaces
-
-# ✅ Correct: Consistent indentation
-server:
-  name: production
-  port: 8080
-```
-
-### 3. Forgetting Quotes for Special Values
-
-```yaml
-# ❌ Wrong: Version interpreted as number
-version: 1.0.0  # Becomes 1.0 (float)
-
-# ✅ Correct: Quoted string
+# ✅ DO: Quote strings with special characters
 version: "1.0.0"
+message: "Error: Connection failed"
 
-# ❌ Wrong: Comment starts early
-description: Version #1  # Only "Version " is the value
+# ❌ DON'T: Leave special characters unquoted
+version: 1.0.0       # Might be interpreted as float
+message: Error: Connection failed  # Comment conflict
 
-# ✅ Correct: Quoted string
-description: "Version #1"
+# ✅ DO: Use anchors to avoid duplication
+defaults: &defaults
+  replicas: 3
+  timeout: 30
+
+dev:
+  <<: *defaults
+  env: development
+
+prod:
+  <<: *defaults
+  env: production
 ```
 
-### 4. Boolean Confusion
+### CI/CD Pipeline Best Practices
 
 ```yaml
-# These are all strings, not booleans:
-enabled: "true"   # String
-enabled: "yes"    # String
-enabled: "on"     # String
+# ✅ DO: Separate concerns into stages
+stages:
+  - Build
+  - Test
+  - Deploy
 
-# These are booleans:
-enabled: true     # Boolean
-enabled: True     # Boolean (case-insensitive)
-enabled: yes       # Boolean (YAML 1.1)
+# ✅ DO: Use meaningful step names
+- name: Install dependencies
+  run: npm ci
+
+# ✅ DO: Implement health checks
+- name: Health check
+  run: curl -f http://localhost:8080/health
+
+# ✅ DO: Secure secrets properly
+env:
+  API_KEY: ${{ secrets.API_KEY }}
+
+# ❌ DON'T: Commit secrets
+env:
+  API_KEY: "sk_live_abc123"
 ```
 
-### 5. List vs Dictionary Confusion
+### Kubernetes Best Practices
 
 ```yaml
-# List (array)
-items:
-  - apple
-  - banana
+# ✅ DO: Always specify resource requests and limits
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "250m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
 
-# Dictionary (object)
-items:
-  apple: fruit
-  banana: fruit
+# ✅ DO: Use health checks (liveness and readiness probes)
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+  initialDelaySeconds: 30
 
-# Mixed (list of dictionaries)
-items:
-  - name: apple
-    type: fruit
-  - name: banana
-    type: fruit
+# ✅ DO: Use namespaces to isolate environments
+metadata:
+  namespace: production
+
+# ✅ DO: Label resources for organization
+labels:
+  app: my-app
+  environment: production
+  version: v1.0.0
+
+# ✅ DO: Use ConfigMaps for non-sensitive config
+envFrom:
+- configMapRef:
+    name: app-config
+
+# ✅ DO: Use Secrets for sensitive data
+envFrom:
+- secretRef:
+    name: app-secrets
+
+# ❌ DON'T: Hardcode credentials
+env:
+- name: DATABASE_PASSWORD
+  value: "my-secret-password"
+```
+
+### Docker Compose Best Practices
+
+```yaml
+# ✅ DO: Always specify image versions
+image: postgres:15-alpine
+
+# ✅ DO: Include health checks
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+  interval: 30s
+
+# ✅ DO: Use named volumes for persistent data
+volumes:
+  postgres-data:
+
+# ✅ DO: Use networks to control communication
+networks:
+  - backend
+
+# ✅ DO: Set resource limits
+deploy:
+  resources:
+    limits:
+      cpus: '1.0'
+      memory: 1G
+
+# ❌ DON'T: Use latest tags in production
+image: myapp:latest
 ```
 
 ---
 
-## YAML vs JSON vs XML
+## Summary
 
-### Comparison
+### What You Now Know
 
-| Feature | YAML | JSON | XML |
-|---------|------|------|-----|
-| Human-readable | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐ |
-| Verbosity | Low | Medium | High |
-| Comments | ✅ Yes | ❌ No | ✅ Yes |
-| Data types | Rich | Basic | Text-based |
-| Learning curve | Easy | Easy | Medium |
-| Use case | Configs, Docs | APIs, Data | Documents, Configs |
-
-### When to Use YAML
-
-✅ **Use YAML for:**
-- Configuration files
-- CI/CD pipelines
-- Infrastructure as Code (Ansible, Kubernetes)
-- Documentation
-- Data that humans need to read/edit
-
-❌ **Don't use YAML for:**
-- High-performance APIs (use JSON)
-- Very large files (use JSON or binary)
-- When you need strict schema validation (consider JSON Schema)
-
----
-
-## Conclusion
-
-YAML is a powerful, human-readable data serialization format that's essential for modern development workflows. Whether you're writing configuration files, defining CI/CD pipelines, or managing infrastructure, YAML provides a clean and intuitive way to represent structured data.
-
-### Key Takeaways
-
-1. **Indentation matters** - Use spaces, not tabs
-2. **Quotes are optional** - But use them for special characters
-3. **Anchors reduce duplication** - Use `&` and `*` for reusable data
-4. **Comments are your friend** - Document complex configurations
-5. **Validate your YAML** - Always check syntax before deploying
+✅ **YAML Fundamentals** - Syntax, data types, indentation rules
+✅ **GitHub Actions** - Workflows, jobs, steps, secrets, matrix strategies
+✅ **Kubernetes** - Deployments, Services, ConfigMaps, Secrets, scaling
+✅ **Docker Compose** - Multi-container setup, networks, volumes
+✅ **Azure Pipelines** - Stages, jobs, tasks, variables, deployment strategies
+✅ **Deployment Commands** - Git, Docker, kubectl, Cloud CLIs
+✅ **Real-World Examples** - Complete CI/CD pipelines for production use
+✅ **Best Practices** - Security, performance, maintainability
 
 ### Next Steps
 
-- Practice writing YAML files for your projects
-- Explore YAML in popular tools (Docker Compose, Kubernetes, Ansible)
-- Learn about YAML schema validation
-- Experiment with advanced features like anchors and custom tags
+1. **Practice** - Write YAML for your projects
+2. **Validate** - Use tools like `yamllint` and IDE plugins
+3. **Automate** - Build CI/CD pipelines for your applications
+4. **Deploy** - Use Kubernetes, Docker, and cloud platforms
+5. **Monitor** - Set up health checks and logging
 
 ---
 
-**Remember**: The best way to learn YAML is by using it. Start with simple configuration files and gradually work your way up to more complex structures!
+**Remember:** YAML is just data serialization. The power comes from using it with modern DevOps tools!
 
