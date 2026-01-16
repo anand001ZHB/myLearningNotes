@@ -3,15 +3,146 @@
 Complete guide covering YAML concepts essential for GitHub Actions, Kubernetes, Docker, Azure Pipelines, and CI/CD deployments.
 
 ## Table of Contents
-1. [YAML Fundamentals](#yaml-fundamentals)
-2. [Core YAML Concepts](#core-yaml-concepts)
-3. [GitHub Actions YAML](#github-actions-yaml)
-4. [Kubernetes YAML](#kubernetes-yaml)
-5. [Docker Compose YAML](#docker-compose-yaml)
-6. [Azure Pipelines YAML](#azure-pipelines-yaml)
-7. [Deployment Shell Commands](#deployment-shell-commands)
-8. [Real-World Examples](#real-world-examples)
-9. [Best Practices](#best-practices)
+1. [YAML Theory](#yaml-theory)
+2. [YAML Fundamentals](#yaml-fundamentals)
+3. [Core YAML Concepts](#core-yaml-concepts)
+4. [GitHub Actions YAML](#github-actions-yaml)
+5. [Kubernetes YAML](#kubernetes-yaml)
+6. [Docker Compose YAML](#docker-compose-yaml)
+7. [Azure Pipelines YAML](#azure-pipelines-yaml)
+8. [Deployment Shell Commands](#deployment-shell-commands)
+9. [Real-World Examples](#real-world-examples)
+10. [Best Practices](#best-practices)
+
+---
+
+## YAML Theory
+
+### WHAT is YAML?
+
+YAML is a **data serialization language** that converts complex data structures (objects, arrays, key-value pairs) into a text format that both humans and machines can understand. Think of it as a way to describe configuration, data, and instructions in a plain-text format.
+
+**Key characteristics:**
+- **Plain text format** - Readable by humans, editable in any text editor
+- **Hierarchical structure** - Uses indentation to show relationships (parent-child)
+- **Minimal syntax** - Fewer special characters compared to JSON or XML
+- **Language-independent** - Works with Python, Java, Node.js, Go, etc.
+
+**Example analogy:**
+```
+Without YAML (nested function calls):
+  server_config(host="localhost", port=8080, 
+    database=db_config(name="mydb", user="admin"))
+
+With YAML (readable format):
+  server:
+    host: localhost
+    port: 8080
+    database:
+      name: mydb
+      user: admin
+```
+
+### WHY Use YAML for DevOps?
+
+**Problem:** Configuration management for complex systems is difficult
+
+**Before YAML (XML/JSON):**
+```xml
+<!-- Too verbose, hard to read -->
+<server>
+  <host>localhost</host>
+  <port>8080</port>
+  <database>
+    <name>mydb</name>
+  </database>
+</server>
+```
+
+**After YAML (Clean and readable):**
+```yaml
+server:
+  host: localhost
+  port: 8080
+  database:
+    name: mydb
+```
+
+**Advantages:**
+- **Readability** - Minimal syntax, whitespace-based structure (like Python)
+- **Version control friendly** - Small, text-based diffs are easy to review
+- **Multi-tool support** - Same format works for Docker, Kubernetes, GitHub, Azure, Terraform
+- **Reduced errors** - Clear structure prevents misconfigurations
+- **Comments support** - Unlike JSON, you can document your configurations
+- **Reusability** - Anchors and aliases reduce duplication
+
+### HOW Does YAML Work?
+
+**Step 1: YAML Parser reads the file**
+```yaml
+application:
+  name: myapp
+  version: "1.0"
+```
+
+**Step 2: Parser converts to data structure**
+```
+{
+  "application": {
+    "name": "myapp",
+    "version": "1.0"
+  }
+}
+```
+
+**Step 3: Application uses the data**
+```
+- Docker reads it to configure containers
+- Kubernetes uses it to manage pods
+- GitHub Actions uses it to define workflows
+- Terraform uses it to create infrastructure
+```
+
+**Key parsing rules:**
+1. **Indentation matters** - 2 spaces per level (not tabs)
+2. **Key-value syntax** - `key: value` (colon + space required)
+3. **Lists use hyphens** - `- item` at the start of a line
+4. **Quotes for special chars** - Use `"value"` if contains `:`, `#`, etc.
+5. **Type inference** - `true` = boolean, `123` = number, `"123"` = string
+
+### WHEN to Use YAML vs Other Formats
+
+| Scenario | Format | Reason |
+|----------|--------|--------|
+| Configuration files | YAML ✅ | Human-readable, supports comments |
+| REST API responses | JSON ✅ | Compact, native JavaScript support |
+| Infrastructure as Code | YAML ✅ | Readable structure for complex deployments |
+| Data exchange | JSON ✅ | Lightweight, minimal overhead |
+| Markup documents | XML ✅ | Structured metadata, namespaces |
+| CI/CD pipelines | YAML ✅ | Standard across all platforms |
+| Kubernetes manifests | YAML ✅ | Only officially supported format |
+| Docker Compose | YAML ✅ | Default and recommended format |
+
+### YAML in the DevOps Ecosystem
+
+```
+┌─────────────────────────────────────┐
+│    YAML Configuration Files         │
+└─────────────────────────────────────┘
+              │
+    ┌─────────┴─────────┬────────────────┬──────────────┐
+    │                   │                │              │
+    v                   v                v              v
+GitHub Actions      Kubernetes        Docker        Azure
+(CI/CD Pipeline)    (Orchestration)   Compose       Pipelines
+                                      (Containers)  (CI/CD)
+```
+
+**Example flow:**
+1. Developer writes `docker-compose.yml` to define services locally
+2. Same developer writes `.github/workflows/deploy.yml` for CI/CD
+3. Deploys to Kubernetes with `deployment.yaml`
+4. All three use YAML format - consistency across tools!
 
 ---
 
@@ -181,63 +312,119 @@ summary: >
 ### Basic Workflow Structure
 
 ```yaml
-# Workflow name - appears in GitHub Actions tab
+# Line 1: name - Workflow name displayed in GitHub Actions UI
+# WHY: Multiple workflows can exist; name identifies this one in the UI
+# Appears in: "Actions" tab → workflow name
 name: CI/CD Pipeline
 
-# Triggers - when this workflow runs
+# Line 5: on - Workflow trigger events
+# WHY: Defines WHEN this workflow should run
+# Can combine multiple triggers (runs on ANY matching condition)
 on:
+  # Line 8: push trigger - Run when code is pushed
   push:
-    # Runs when code is pushed to these branches
+    # Line 9: branches - Only run when pushing to these branches
+    # WHY: Don't run workflow on every branch (e.g., skip feature branches)
+    # Uses fnmatch pattern matching (glob syntax)
     branches: [ main, develop ]
-    # Runs only when these paths change
+    
+    # Line 12: paths - Only run if these paths changed
+    # WHY: Skip pipeline if only docs changed (don't rebuild for README.md changes)
     paths:
-      - 'src/**'
-      - 'package.json'
+      - 'src/**'              # Any file under src/ directory
+      - 'package.json'        # Dependency file (if changed, need to rebuild)
   
+  # Line 16: pull_request trigger - Run when PR is opened/updated
   pull_request:
-    # Runs when PR is opened, updated, or reopened
+    # Line 17: branches - Only for PRs targeting these branches
+    # WHY: Don't test PRs targeting old release branches
     branches: [ main ]
   
-  # Manual trigger from GitHub UI
+  # Line 20: Manual trigger - Run from GitHub UI
+  # WHY: Allows manual deployments (not on push/PR)
+  # Use case: Deploy to production without merging PR
   workflow_dispatch:
   
-  # Run on schedule (cron format)
+  # Line 24: Schedule trigger - Run on schedule (cron)
+  # WHY: Run nightly tests, cleanup jobs, scheduled deployments
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC (GitHub runs in UTC)
+                         # Format: minute hour day month day-of-week
+                         # Reference: https://crontab.guru
 
-# Environment variables available to all jobs
+# Line 29: env - Environment variables for all jobs
+# WHY: Centralize configuration used across all jobs
+# Available to: all jobs, all steps
 env:
-  NODE_VERSION: '18.x'
-  REGISTRY: ghcr.io
+  NODE_VERSION: '18.x'    # Version for setup-node action
+  REGISTRY: ghcr.io       # Container registry for Docker images
 
-# Jobs - units of work that run on runners
+# Line 33: jobs - Workflow jobs (parallel or sequential units of work)
+# WHY: Break down work into manageable pieces
+# Each job runs on separate runner (VM), can run in parallel
 jobs:
+  # Line 35: build - Job name (used in output, dependencies, etc.)
   build:
-    # Which machine to run on
+    # Line 36: runs-on - Which machine/environment to run this job on
+    # Options:
+    #   ubuntu-latest = Linux VM (recommended, fastest)
+    #   windows-latest = Windows VM (for .NET, PowerShell)
+    #   macos-latest = macOS VM (for Swift, Objective-C)
+    # WHY: Different runners for different OS requirements
     runs-on: ubuntu-latest
     
-    # Steps - individual tasks
+    # Line 43: steps - Individual tasks within this job
+    # Executed sequentially in order
+    # If a step fails, subsequent steps don't run (unless continue-on-error)
     steps:
-      # ACTION: Check out your code
+      # Line 46: uses - Run a pre-built Action (reusable workflow component)
+      # Format: owner/repo@version (installed from GitHub Marketplace)
+      # actions/checkout = official action to download your repository code
+      # WHY: Actions encapsulate complex logic; reuse across workflows
       - uses: actions/checkout@v4
       
-      # ACTION: Setup Node.js environment
+      # Line 50: Setup Node.js with caching
+      # WHY: Speeds up subsequent builds by caching dependencies
       - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'  # Cache node_modules for speed
+        with:                           # Input parameters for the action
+          node-version: ${{ env.NODE_VERSION }}  # Variable reference
+          cache: 'npm'                  # Enable npm cache
       
-      # RUN: Execute shell command
-      - name: Install dependencies
-        run: npm install
+      # Line 55: run - Execute shell command
+      # Runs in: bash (on Linux/macOS), cmd (on Windows)
+      - name: Install dependencies      # Step name (appears in logs)
+        run: npm install                # npm ci better for CI/CD (cleaner installs)
       
-      # RUN: Build the project
+      # Line 59: Build the project
       - name: Build application
-        run: npm run build
+        run: npm run build               # Runs script from package.json
       
-      # RUN: Run tests
+      # Line 62: Run tests
       - name: Run tests
-        run: npm test
+        run: npm test                    # Unit tests, assertion checks
+```
+
+**Workflow Execution Flow:**
+```
+1. Push to main branch
+   ↓
+2. GitHub detects trigger (push to main)
+   ↓
+3. Allocates runner (VM) for the workflow
+   ↓
+4. Clones your repository (actions/checkout)
+   ↓
+5. Runs each step in sequence:
+   - Setup Node.js
+   - Install dependencies
+   - Build application
+   - Run tests
+   ↓
+6. If any step fails, stop and notify (workflow failed)
+   ↓
+7. If all steps pass, mark workflow as success
+   ↓
+8. Logs and artifacts available in GitHub UI
 ```
 
 ### Key GitHub Actions Concepts
@@ -408,94 +595,155 @@ steps:
 ### Basic Kubernetes Manifest Structure
 
 ```yaml
-# API version - which Kubernetes API to use
+# Line 1: API version - Specifies which Kubernetes API version to use
+# apps/v1 = stable API for applications (deployments, statefulsets, daemonsets)
+# WHY: Different API versions have different features and stability guarantees
 apiVersion: apps/v1
 
-# Kind - type of Kubernetes resource
+# Line 4: Kind - Type of Kubernetes resource to create
+# Deployment = manages pods with rolling updates, self-healing, scaling
+# Other options: Service, ConfigMap, Secret, Pod, StatefulSet, DaemonSet, Job
+# WHY: Kubernetes needs to know what type of resource you're defining
 kind: Deployment
 
-# Metadata - information about this resource
+# Line 7: Metadata section - Information about this resource (name, labels, namespace)
 metadata:
-  name: my-app              # Name of the deployment
-  namespace: production     # Namespace (logical cluster)
+  # Line 8: name - Unique identifier for this deployment within a namespace
+  # MUST be DNS-1123 compliant (lowercase, hyphens, alphanumeric)
+  # Used by: kubectl commands, service discovery, logs
+  name: my-app
+  
+  # Line 11: namespace - Logical cluster partition for multi-tenant isolation
+  # WHY: Namespaces help organize resources (dev, staging, production)
+  # Default namespace is "default" if not specified
+  namespace: production
+  
+  # Line 14: labels - Key-value pairs for resource organization and selection
+  # WHY: Labels are used to group resources, query with selectors, manage deployments
   labels:
-    app: my-app            # Labels for organizing resources
-    environment: prod
-    version: v1.0.0
+    app: my-app            # Standard label: which app does this belong to?
+    environment: prod      # Custom label: environment identifier
+    version: v1.0.0        # Custom label: version for rolling updates
 
-# Spec - desired state of the resource
+# Line 19: spec - Desired state specification (what Kubernetes should create and maintain)
 spec:
-  # Number of pod replicas
+  # Line 21: replicas - Number of pod copies to run
+  # WHY: Provides redundancy, load distribution, and high availability
+  # If a pod crashes, Kubernetes automatically creates a replacement
+  # Can be changed without redeploying: kubectl scale deployment/my-app --replicas=5
   replicas: 3
   
-  # How to select pods managed by this deployment
+  # Line 25: selector - How to identify pods managed by this deployment
+  # WHY: Deployment needs to know which pods to manage and update
+  # IMPORTANT: Must match labels in template.metadata.labels (otherwise pods are orphaned)
   selector:
     matchLabels:
-      app: my-app          # Must match labels in template
+      app: my-app          # Selector filter: only manage pods labeled app=my-app
   
-  # Template for pod creation
+  # Line 30: template - Blueprint for creating pods
+  # WHY: Defines what each pod should look like (image, ports, env vars, resources)
   template:
     metadata:
+      # Line 33: labels for pods created from this template
+      # MUST match selector.matchLabels so deployment can manage them
+      # WHY: Service will use these labels to route traffic to pods
       labels:
-        app: my-app        # Pods get these labels
+        app: my-app        # Must match selector above!
     
     spec:
-      # Container definitions
+      # Line 38: containers - List of containers to run in each pod
+      # WHY: A pod can have multiple containers (main app + sidecar), but usually just one
       containers:
-      - name: app-container           # Container name
-        image: myapp:1.0.0            # Docker image
-        imagePullPolicy: IfNotPresent  # Only pull if not present
+      # Line 40: Start of first container definition (list item with hyphen)
+      - name: app-container           # Container name (used in logs, debugging)
         
+        # Line 42: image - Docker image to use for this container
+        # Format: [registry]/[image]:[tag]
+        # myapp:1.0.0 = use local/default registry, image "myapp", tag "1.0.0"
+        # WHY: Specifies exact version to prevent "works on my machine" issues
+        image: myapp:1.0.0
+        
+        # Line 47: imagePullPolicy - When to pull the image from registry
+        # Options:
+        #   Always = always pull (for CI/CD, ensures latest from registry)
+        #   IfNotPresent = only pull if not cached locally (default, faster)
+        #   Never = only use cached images, fail if not present
+        # WHY: Controls whether to check registry for newer versions
+        imagePullPolicy: IfNotPresent
+        
+        # Line 53: ports - Which ports this container listens on
+        # WHY: Kubernetes needs to know what ports to expose and monitor
         ports:
-        - containerPort: 8080         # Port to expose
-          name: http
+        - containerPort: 8080         # Port inside the container (where app listens)
+          name: http                  # Name for this port (used in services)
         
-        # Environment variables in the container
+        # Line 57: env - Environment variables to pass to the container
+        # WHY: Configure app behavior without changing code or image
         env:
+        # Line 59: Direct environment variable (hardcoded value)
         - name: DATABASE_URL
           value: "postgresql://db:5432/mydb"
         
-        # Read from ConfigMap
+        # Line 62: Environment variable from ConfigMap (read from config file)
+        # WHY: Separate configuration from image, allow updates without rebuilding
         - name: APP_CONFIG
           valueFrom:
-            configMapKeyRef:
-              name: app-config
-              key: settings
+            configMapKeyRef:          # Read from ConfigMap resource
+              name: app-config        # ConfigMap resource name
+              key: settings           # Which key in the ConfigMap
         
-        # Read from Secret (encrypted)
+        # Line 69: Environment variable from Secret (read from encrypted secret)
+        # WHY: Keep sensitive data (passwords, tokens) encrypted and separate
         - name: DATABASE_PASSWORD
           valueFrom:
-            secretKeyRef:
-              name: db-secret
-              key: password
+            secretKeyRef:             # Read from Secret resource
+              name: db-secret         # Secret resource name
+              key: password           # Which key in the Secret
         
-        # Resource limits (prevent resource exhaustion)
+        # Line 76: resources - CPU and memory constraints
+        # WHY: 
+        #   Prevent pods from consuming all cluster resources
+        #   Allow Kubernetes to schedule pods efficiently
+        #   Requests = what pod needs to run | Limits = maximum allowed
         resources:
-          requests:                    # Minimum required
-            memory: "256Mi"
-            cpu: "250m"
-          limits:                      # Maximum allowed
-            memory: "512Mi"
-            cpu: "500m"
+          # Line 79: requests - Minimum resources needed to schedule this pod
+          # WHY: Kubernetes scheduler reserves these resources for the pod
+          # If not enough resources, pod stays in "Pending" state
+          requests:
+            memory: "256Mi"           # Minimum 256 Megabytes of RAM
+            cpu: "250m"               # Minimum 0.25 CPU cores (1000m = 1 core)
+          
+          # Line 84: limits - Maximum resources pod can use
+          # WHY: Prevent pod from using too much, killing other pods
+          # If pod exceeds limits, it gets throttled (CPU) or killed (memory)
+          limits:
+            memory: "512Mi"           # Maximum 512 Megabytes of RAM
+            cpu: "500m"               # Maximum 0.5 CPU cores
         
-        # Health check - is the app running?
+        # Line 89: livenessProbe - Is the container still running?
+        # WHY: Detects zombie processes (app crashed but container still running)
+        # ACTION: If fails, Kubernetes restarts the pod
+        # Use case: App hangs but doesn't crash, needs restart
         livenessProbe:
-          httpGet:
-            path: /health
-            port: 8080
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
+          httpGet:                    # Check by making HTTP GET request
+            path: /health            # Endpoint that returns 200 if healthy
+            port: 8080               # Container port to check
+          initialDelaySeconds: 30     # Wait 30 seconds before first check (startup time)
+          periodSeconds: 10           # Check every 10 seconds
+          timeoutSeconds: 5           # If no response in 5 seconds, consider failed
+          failureThreshold: 3         # Restart after 3 consecutive failures
         
-        # Ready check - can it handle traffic?
+        # Line 105: readinessProbe - Is the container ready to handle traffic?
+        # WHY: Pod might be healthy but not ready (loading data, warming up)
+        # ACTION: If fails, remove pod from service load balancer (no new traffic)
+        # Use case: Don't route requests until pod is fully initialized
         readinessProbe:
-          httpGet:
-            path: /ready
-            port: 8080
-          initialDelaySeconds: 10
-          periodSeconds: 5
-          failureThreshold: 3
+          httpGet:                    # Check by making HTTP GET request
+            path: /ready              # Endpoint that returns 200 if ready
+            port: 8080                # Container port to check
+          initialDelaySeconds: 10     # Wait 10 seconds before first check
+          periodSeconds: 5            # Check every 5 seconds (more frequent than liveness)
+          failureThreshold: 3         # Remove from service after 3 consecutive failures
 ```
 
 ### Core Kubernetes Resources
@@ -676,86 +924,172 @@ spec:
 ### Basic Docker Compose Structure
 
 ```yaml
-# Compose file version (3.8 is common)
+# Line 1: Compose file format version
+# Version history:
+#   3.8 = Latest stable (recommended)
+#   3.7, 3.6, etc. = Older versions with fewer features
+# WHY: Docker adds new features and syntax, version ensures backward compatibility
 version: '3.8'
 
-# Services - containers to run
+# Line 5: services - Dictionary of containers to run
+# WHY: Compose orchestrates multiple containers as a single application
 services:
-  # Service 1: Web application
+  # Line 7: web - Service name (used in docker-compose commands and internal networking)
+  # Access from other services via hostname "web" or "web:8080"
   web:
-    # Build from Dockerfile
+    # Line 9: build - Instructions to build image from Dockerfile
+    # WHY: Allows customization of image during build (no need to push to registry)
+    # Used in development; for production use pre-built "image" instead
     build:
-      context: ./web           # Build context directory
-      dockerfile: Dockerfile   # Dockerfile name
+      context: ./web           # Directory containing Dockerfile (build context)
+                               # Sent to Docker daemon for building
+      dockerfile: Dockerfile   # Dockerfile name (default is "Dockerfile")
     
-    # OR use pre-built image
+    # Line 15: image - Pre-built Docker image to use
+    # WHY: Much faster than building; use for production images from registries
+    # Format: [registry]/[image]:[tag]
+    # nginx:latest = Docker Hub, nginx image, latest tag
+    # Note: Can use BOTH build and image; image becomes the name for built image
     image: nginx:latest
     
-    # Container name
+    # Line 20: container_name - Custom container name in Docker daemon
+    # WHY: Makes it easier to identify container (instead of auto-generated names)
+    # Default: [project-name]_[service-name]_1
+    # Note: Set only if running single instance (can't scale with container_name)
     container_name: web-app
     
-    # Restart policy
-    restart: unless-stopped    # Always restart unless stopped manually
+    # Line 24: restart - Restart policy if container exits
+    # Options:
+    #   no = don't automatically restart (default)
+    #   always = always restart (even after Docker daemon restart)
+    #   unless-stopped = restart unless manually stopped
+    #   on-failure = restart only if exit code indicates failure
+    # WHY: Ensures service keeps running in production
+    restart: unless-stopped
     
-    # Port mapping
+    # Line 31: ports - Expose container ports to host/external network
+    # Format: "host_port:container_port" or "127.0.0.1:host_port:container_port"
+    # WHY: Container network is isolated; ports must be explicitly exposed
     ports:
-      - "80:8080"             # Host:Container
-      - "443:8443"
+      - "80:8080"             # Host port 80 → Container port 8080 (web traffic)
+      - "443:8443"            # Host port 443 → Container port 8443 (HTTPS traffic)
     
-    # Environment variables
+    # Line 36: environment - Environment variables passed to container
+    # WHY: Configure app behavior without changing code; different per environment
+    # Available in container as process environment variables
     environment:
-      - NODE_ENV=production
-      - DATABASE_URL=postgres://db:5432/mydb
+      - NODE_ENV=production   # Node.js mode (affects behavior and logging)
+      - DATABASE_URL=postgres://db:5432/mydb  # Database connection string
+                              # "db" = service name (Docker network DNS resolution)
     
-    # OR from .env file
+    # Line 42: env_file - Load environment variables from file
+    # WHY: Avoid hardcoding sensitive values in docker-compose.yml
+    # .env.production file contains KEY=VALUE pairs, loaded at startup
     env_file:
-      - .env.production
+      - .env.production       # Path to .env file (relative to docker-compose.yml)
     
-    # Volume mounting (persistent storage)
+    # Line 46: volumes - Mount directories/files from host or named volumes
+    # WHY: 
+    #   Persist data between container restarts
+    #   Share code for development (hot reload)
+    #   Share config files
     volumes:
-      - ./app:/app            # Bind mount
-      - app-data:/data        # Named volume
+      - ./app:/app            # Bind mount: host ./app → container /app (read-write)
+                              # WHY: Share source code for development
+      - app-data:/data        # Named volume: managed by Docker, persistent
+                              # WHY: Persist application data
     
-    # Service dependencies
+    # Line 54: depends_on - Service dependencies (wait for other services)
+    # WHY: Ensure dependent services start before this one
+    # Can wait for container to start or reach healthy state
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_healthy  # Only continue when db is healthy (per its healthcheck)
     
-    # Health check
+    # Line 59: healthcheck - Periodic check to determine container health
+    # WHY: docker-compose depends_on can wait for healthy status
+    # Also used by monitoring/orchestration to restart unhealthy containers
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+                              # Run this command; if exit 0 = healthy
+      interval: 30s           # Check every 30 seconds
+      timeout: 10s            # Give command 10 seconds to complete; if longer = failed
+      retries: 3              # After 3 failed checks, mark container unhealthy
     
-    # Network
+    # Line 68: networks - Connect container to Docker networks
+    # WHY: Controls network visibility and communication
+    # Service can communicate with others on same network via service name (DNS)
     networks:
-      - frontend
-      - backend
+      - frontend              # Custom network for frontend services
+      - backend               # Custom network for backend services (separate from frontend)
   
-  # Service 2: Database
+  # Line 73: db - Database service
   db:
+    # Pre-built PostgreSQL image (no build needed)
     image: postgres:15-alpine
+    
+    # Container name for easy identification
     container_name: postgres-db
     
-    # Environment variables for postgres
+    # PostgreSQL-specific environment variables
+    # WHY: PostgreSQL image uses these to initialize database
     environment:
-      POSTGRES_DB: mydb
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: mydb       # Initial database name to create
+      POSTGRES_USER: admin    # Default user
+      POSTGRES_PASSWORD: secret  # Default password
+                              # NOTE: Should come from .env file or secrets!
     
-    # Persistent volume
+    # Persistent data storage
     volumes:
       - postgres-data:/var/lib/postgresql/data
+                              # Named volume: persists database files
+                              # WHY: Without this, data lost when container stops
     
-    # Health check (for depends_on)
+    # Health check specific to PostgreSQL
+    # WHY: Tells Docker when database is ready to accept connections
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+                              # PostgreSQL utility to check if accepting connections
+      interval: 10s           # Check every 10 seconds (more frequent than web app)
+      timeout: 5s             # Database should respond very quickly
+      retries: 5              # More retries for startup time
 
-# Named volumes
+# Line 104: volumes (top-level) - Define named volumes used by services
+# WHY: Volumes are Docker's way to manage persistent storage
+# Alternative to bind mounts: more portable, better performance, easier backup
+volumes:
+  postgres-data:              # Volume name (referenced in service volumes)
+                              # Docker creates/manages this automatically
+  app-data:                   # Another named volume for app data
+
+# Line 109: networks (top-level) - Define custom networks
+# WHY: Services on different networks can't communicate (security isolation)
+# Example: frontend services can't directly access backend databases
+networks:
+  frontend:                   # Network for user-facing services
+    driver: bridge            # Bridge network (local, single-host)
+  backend:                    # Network for internal services
+    driver: bridge            # Bridge network (isolated from frontend)
+```
+
+**Key Docker Compose Workflow:**
+```
+1. docker-compose up -d
+   ↓
+2. Create networks (frontend, backend)
+   ↓
+3. Create volumes (postgres-data, app-data)
+   ↓
+4. Start db service
+   ↓
+5. Wait for db healthcheck to pass
+   ↓
+6. Start web service
+   ↓
+7. Web connects to db via network (hostname "db")
+   ↓
+8. Both services running, application operational
+```
 volumes:
   postgres-data:
   app-data:
@@ -858,107 +1192,191 @@ healthcheck:
 ### Basic Azure Pipelines Structure
 
 ```yaml
-# Trigger rules
+# Line 1: trigger - When to automatically run this pipeline
+# WHY: Automatically run on push/PR without manual trigger
 trigger:
+  # Line 3: branches - Run on pushes to these branches
+  # WHY: Don't run on every branch; only important ones
   branches:
     include:
-      - main
-      - develop
+      - main        # Run on main branch
+      - develop     # Run on develop branch
     exclude:
-      - releases/*
+      - releases/*  # Don't run on releases/* branches
+  
+  # Line 10: paths - Only run if these paths changed
+  # WHY: Skip expensive builds if only docs changed
   paths:
     include:
-      - src/
-      - tests/
+      - src/        # Include source code changes
+      - tests/      # Include test file changes
     exclude:
-      - docs/
+      - docs/       # Exclude documentation changes
+      - README.md   # Exclude README updates
 
-# Pull request trigger
+# Line 17: pr - When to run on pull requests
+# WHY: Validate code before merge
 pr:
+  # Line 19: branches - Only run PR validation for PRs targeting these branches
+  # WHY: Don't validate PRs to old branches
   branches:
     include:
-      - main
+      - main        # Require checks before merging to main
 
-# Variables (configuration)
+# Line 24: variables - Global variables accessible in all stages/jobs
+# WHY: Centralize configuration; define once, use everywhere
+# Three types: hardcoded, variable groups (from library), dynamic (from expressions)
 variables:
-  buildConfiguration: 'Release'
-  nodeVersion: '18.x'
-  imageName: 'myapp'
+  buildConfiguration: 'Release'  # Build configuration (Release vs Debug)
+  nodeVersion: '18.x'            # Node.js version for build
+  imageName: 'myapp'             # Docker image name for builds
 
-# Stages - logical groups of jobs
+# Line 29: stages - Logical grouping of jobs
+# WHY: Organize pipeline into phases (Build → Test → Deploy)
+# Runs SEQUENTIALLY by default (wait for previous stage to complete)
 stages:
-  # Stage 1: Build and Test
+  # Line 32: Stage 1 - Build and Test
   - stage: Build
-    displayName: 'Build Stage'
+    displayName: 'Build Stage'    # User-friendly name
+    
+    # Line 35: jobs - Work units within stage
     jobs:
-      # Job 1: Build application
+      # Line 37: Job 1 - Build application
       - job: BuildJob
         displayName: 'Build Application'
-        pool:
-          vmImage: 'ubuntu-latest'  # Which agent/VM to use
         
+        # Line 40: pool - Which machine to run job on
+        # WHY: Different pools have different OS/tools available
+        pool:
+          vmImage: 'ubuntu-latest'  # Use latest Ubuntu Linux VM (recommended)
+                                    # Other options: windows-latest, macos-latest
+        
+        # Line 44: steps - Sequential tasks within job
         steps:
-          # Setup Node.js
-          - task: NodeTool@0
+          # Step 1: Setup Node.js
+          # WHY: Need Node.js available to run npm commands
+          - task: NodeTool@0          # Azure task identifier
             displayName: 'Use Node.js $(nodeVersion)'
-            inputs:
-              versionSpec: '$(nodeVersion)'
+            inputs:                   # Task configuration
+              versionSpec: '$(nodeVersion)'  # Install Node.js 18.x
           
-          # Install dependencies
-          - task: Npm@1
+          # Step 2: Install dependencies
+          # WHY: npm install fetches all required packages from npm registry
+          - task: Npm@1               # Azure's npm task (wrapper around npm)
             displayName: 'npm install'
             inputs:
-              command: 'install'
+              command: 'install'      # Run npm install command
           
-          # Run build
+          # Step 3: Build application
+          # WHY: Compile TypeScript → JavaScript, bundle code, etc.
           - task: Npm@1
             displayName: 'npm run build'
             inputs:
-              command: 'custom'
-              customCommand: 'run build'
+              command: 'custom'       # Run custom npm script
+              customCommand: 'run build'  # Runs "npm run build" from package.json
           
-          # Publish build artifacts
+          # Step 4: Publish build artifacts
+          # WHY: Make build output available to other stages/jobs
           - task: PublishBuildArtifacts@1
             displayName: 'Publish Artifacts'
             inputs:
               pathToPublish: '$(Build.ArtifactStagingDirectory)'
-              artifactName: 'drop'
+                                      # Built output directory
+              artifactName: 'drop'    # Artifact name for reference
   
-  # Stage 2: Deploy
+  # Line 66: Stage 2 - Deploy
   - stage: Deploy
     displayName: 'Deploy Stage'
-    dependsOn: Build           # Wait for Build stage
-    condition: succeeded()     # Only if Build succeeded
+    # Line 69: dependsOn - Wait for Build stage to complete
+    # WHY: Can't deploy if build fails
+    dependsOn: Build
+    # Line 71: condition - Only run if Build succeeded
+    # WHY: Skip deploy if tests/build failed
+    condition: succeeded()
     
     jobs:
+      # Line 74: deployment - Special job type for deployments
+      # WHY: Deployment jobs have additional features:
+      #   - environment selection
+      #   - approval gates
+      #   - deployment strategies (rolling, canary, etc.)
       - deployment: DeployApp
         displayName: 'Deploy to Production'
-        environment:
-          name: 'Production'
-          resourceType: 'Kubernetes'
         
+        # Line 80: environment - Target deployment environment
+        # WHY: Azure can track deployment history, apply approval rules, etc.
+        # Environments defined in Azure DevOps project settings
+        environment:
+          name: 'Production'          # Environment name
+          resourceType: 'Kubernetes'  # Resource type (for validation/approval)
+        
+        # Line 85: strategy - How to deploy (rolling, canary, blue-green, etc.)
         strategy:
-          # Rolling deployment strategy
+          # Line 87: rolling - Update pods incrementally
+          # WHY: Prevents downtime, easy rollback if issues
           rolling:
-            maxParallel: 2         # Update 2 pods at a time
-          # OR canary deployment
+            maxParallel: 2            # Update maximum 2 pods at a time
+          
+          # Alternative: canary deployment
           canary:
             increments: [10, 20, 50, 100]  # % rollout increments
+                                      # Deploy to 10% → 20% → 50% → 100%
+                                      # Allows validation before full rollout
         
+        # Line 95: steps - Deployment tasks
         steps:
           # Download artifact from Build stage
           - download: current
-            artifact: drop
+            artifact: drop            # Download 'drop' artifact published earlier
           
           # Deploy using kubectl
-          - task: Kubernetes@1
+          - task: Kubernetes@1        # Azure Kubernetes task
             displayName: 'Deploy to Kubernetes'
             inputs:
               connectionType: 'Kubernetes Service Connection'
+                                      # Connection to Kubernetes cluster
               kubernetesServiceEndpoint: 'k8s-prod'
-              namespace: 'production'
-              command: 'apply'
-              arguments: '-f deployment.yaml'
+                                      # Named connection in Azure DevOps
+              namespace: 'production'  # Kubernetes namespace
+              command: 'apply'        # kubectl apply (create/update resources)
+              arguments: '-f deployment.yaml'  # Apply this YAML file
+```
+
+**Azure Pipelines Execution Flow:**
+```
+1. Push to main branch
+   ↓
+2. Azure Pipelines detects trigger
+   ↓
+3. STAGE 1: Build
+   - Allocate ubuntu-latest VM
+   - Setup Node.js
+   - Run npm install
+   - Run npm run build
+   - Publish artifacts
+   ↓
+4. Wait for Build stage to complete
+   ↓
+5. STAGE 2: Deploy
+   - Check condition: succeeded() ✓
+   - Allocate VM for deployment
+   - Download artifacts from Build
+   - Deploy to Kubernetes with rolling strategy
+   ↓
+6. Pipeline complete, logs and status available
+```
+
+**Key Differences: GitHub Actions vs Azure Pipelines:**
+```
+GitHub Actions                          | Azure Pipelines
+─────────────────────────────────────────────────────────────
+- Workflows in .github/workflows/       | - Pipeline in azure-pipelines.yml
+- Uses "jobs" (parallel)                | - Uses "stages" (sequential) + jobs
+- Triggers: on                          | - Triggers: trigger, pr
+- Steps use "uses" and "run"            | - Steps use "task" (built-in) or scripts
+- Uses marketplace actions              | - Uses Azure DevOps tasks
+- GitHub-hosted or self-hosted          | - Microsoft-hosted or self-hosted
+- Free for public repos                 | - Free tier available
 ```
 
 ### Key Azure Pipelines Concepts
